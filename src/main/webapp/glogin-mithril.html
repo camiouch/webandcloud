@@ -2,7 +2,7 @@
 <head>
 <meta name="google-signin-scope" content="profile email">
 <meta name="google-signin-client_id"
-	content="927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com">
+	content="331048952451-9k74vlboc2n4vvh12jkct30fhc2euc85.apps.googleusercontent.com">
 <script src="https://apis.google.com/js/platform.js" async defer></script>
 
 
@@ -32,12 +32,16 @@ var Profile={
   list:[],
   view: function(){
 	return m('div', {class:'container'}, [
-  	  m("h1", {class: 'title'}, "name:"+Profile.name),
-	  m("h2", {class: 'subtitle'}, "email:"+Profile.email),
-	  m("img",{"src":Profile.url}),
-	  m("button",{class:"button", onclick: function(e) { Profile.loadList()}},"Msgs"),
-	  m("button",{class:"button", onclick: function(e) { Profile.postMessage()}},"Post Dummy"),
-	  m("div",m(PostView,{profile: Profile}))
+	  m("h1", {class: 'title'}, 'TinyGram'),
+	  m('div',{class: 'tile is-ancestor', width:"50px"},[
+		  m('div',{class: 'tile box is-child'},[
+			  m("img",{class: 'is-rounded',"src":Profile.url}),
+			  m("h1", {class: 'title'}, Profile.name),
+			  m("h2", {class: 'subtitle'}, Profile.email),
+	      ]),  
+	      m('div',{class:'tile box is-child'},m(PostForm)),
+      ]),  
+	  m("div",{class:'box'},m(PostView,{profile: Profile}))
 	])
   },
   loadList: function() {
@@ -73,8 +77,8 @@ var Profile={
           }})
   },
    postMessage: function() {
-		var data={'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-				'body': "paglop "+Date.now()}
+		var data={'url':PostForm.url,
+			'body':PostForm.body}
     	console.log("post:"+data)
 		return m.request({
     		method: "POST",
@@ -91,7 +95,7 @@ var Profile={
 var PostView = {
 		  view: function(vnode) {
 		   	return m('div', [
-			  m('div',{class:'subtitle'},"My Posts"),
+			  m('div',{class:'subtitle'},"Mes Publications"),
 			  m('table', {class:'table is-striped',"table":"is-striped"},[
 			    m('tr', [
 				  m('th', {width:"50px"}, "like"),
@@ -104,9 +108,11 @@ var PostView = {
 			      return m("tr", [
 		            m("td", m("button", {onclick: function(e) {
 						console.log("like:"+item.key.id)
+						//TO DO
 		                 }},"like")),
-		                 m("td", m("button", {onclick: function(e) {
-		     				console.log("del:"+item.key.id)
+		            m("td", m("button", {onclick: function(e) {
+	     				console.log("del:"+item.key.id)
+	     				//TO DO
 		                 }},"del")),
 			        m('td', m('label', item.properties.body)),
 			        m('td', m('img', {class: 'is-rounded', 'src': item.properties.url})),
@@ -125,6 +131,39 @@ var PostView = {
 		}
 
 
+var PostForm = {
+		url:"",
+		body:"",
+		  view: function() {
+		    return m("form", {
+		      onsubmit: function(e) {
+		        e.preventDefault()
+				if (url="") {url="https://dummyimage.com/320x200/000/fff&text="+Date.now()} 
+				if (body="") {body="post-body \n"+Date.now()}
+		        Profile.postMessage()
+		      }}, 
+		      [
+		    	m('div', {class:'field'},[
+		    	 m("h2", {class: 'subtitle'}, 'Nouvelle Publication'),
+		         m("label", {class:'label'},"URL"),
+		         m('div',{class:'control'}, m("input[type=text]", {
+		          class:'input is-rounded',
+		          placeholder:"Your url",
+		             oninput: function(e) {PostForm.url = e.target.value}})),
+//		         m("img",{"src":this.url}),
+		        ]),
+		      m('div',{class:'field'},[
+		    	  m("label", {class: 'label'},"Body"),
+		          m('div',{class:'control'},m("input[type=textarea]", {
+		        class:'textarea',
+		        placeholder:"your text",
+		        oninput: function(e) { PostForm.body = e.target.value }})),
+		        ]),
+		      m('div',{class:'control'},m("button[type=submit]", {class:'button is-link'},"Poster")),
+		    ])
+		  }
+		}
+
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
   Profile.name=profile.getName();
@@ -137,7 +176,7 @@ function onSignIn(googleUser) {
 var Login = {
   view: function() {
  	return m('div', {class:'container'}, [
-      m("h1", {class: 'title'}, 'The TinyGram Post'),
+      m("h1", {class: 'title'}, 'TinyGram - Login'),
       m("div", {
       	   "class":"g-signin2",
       	   "data-theme":"dark",

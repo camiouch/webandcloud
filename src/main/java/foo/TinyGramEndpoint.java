@@ -38,8 +38,8 @@ import com.google.appengine.api.datastore.Transaction;
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
-  	 clientIds = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
+     audiences = "331048952451-9k74vlboc2n4vvh12jkct30fhc2euc85.apps.googleusercontent.com",
+  	 clientIds = "331048952451-9k74vlboc2n4vvh12jkct30fhc2euc85.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
 		   ownerDomain = "helloworld.example.com",
@@ -47,58 +47,9 @@ import com.google.appengine.api.datastore.Transaction;
 		   packagePath = "")
      )
 
-public class ScoreEndpoint {
+public class TinyGramEndpoint {
 
-	Random r = new Random();
-
-	@ApiMethod(name = "getRandom", httpMethod = HttpMethod.GET)
-	public RandomResult random() {
-		return new RandomResult(r.nextInt(6) + 1);
-	}
-
-	@ApiMethod(name = "scores", httpMethod = HttpMethod.GET)
-	public List<Entity> scores() {
-		Query q = new Query("Score").addSort("score", SortDirection.DESCENDING);
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
-		return result;
-	}
-
-	@ApiMethod(name = "topscores", httpMethod = HttpMethod.GET)
-	public List<Entity> topscores() {
-		Query q = new Query("Score").addSort("score", SortDirection.DESCENDING);
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(10));
-		return result;
-	}
-
-	@ApiMethod(name = "myscores", httpMethod = HttpMethod.GET)
-	public List<Entity> myscores(@Named("name") String name) {
-		Query q = new Query("Score").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name)).addSort("score",
-				SortDirection.DESCENDING);
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(10));
-		return result;
-	}
-
-	@ApiMethod(name = "addScore", httpMethod = HttpMethod.GET)
-	public Entity addScore(@Named("score") int score, @Named("name") String name) {
-
-		Entity e = new Entity("Score", "" + name + score);
-		e.setProperty("name", name);
-		e.setProperty("score", score);
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		datastore.put(e);
-
-		return e;
-	}
+	
 
 	@ApiMethod(name = "postMessage", httpMethod = HttpMethod.POST)
 	public Entity postMessage(PostMessage pm) {
@@ -155,7 +106,6 @@ public class ScoreEndpoint {
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-
 		Query q = new Query("Post").
 		    setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, user.getEmail()));
 
