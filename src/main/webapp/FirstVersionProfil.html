@@ -69,7 +69,6 @@ var Profile={
   email:"",
   ID:"",
   url:"",
-  bio:"",
   nextToken:"",
   list:[],
   oncreate: function() {
@@ -77,73 +76,58 @@ var Profile={
   },
   view: function(){
 	return m('div', {class:'container'}, [
-		m('div',{class: 'columns ',},[
-			m('div',{class:'column is-2'},""),
-			m('div', {class:'column is-8 has-text-centered'}, [
-				m('div', {class:'level'}, [
-					 m("h1", {class: 'level-left '}, [
-						 m("a",{class: 'button is-primary is-inverted title'},[
-							  m('span', {class:'icon'}, [
-								  m('i',{class:'fas fa-home'}),
-							  ]),
-							  m('span','Accueil'),
-						  ]),
+		m('div', {class:'level'}, [
+			 m("h1", {class: 'level-left '}, [
+				 m("a",{class: 'button is-primary is-inverted title'},[
+					  m('span', {class:'icon'}, [
+						  m('i',{class:'fas fa-home'}),
 					  ]),
-					 m("button", {class: 'button level-right is-link subtitle',  onclick : function signOut() {
-						    var auth2 = gapi.auth2.getAuthInstance();
-						    auth2.signOut().then(function () {
-						      console.log('User signed out.');
-						      m.route.set("/login")
-						    });
-						  }}, 'Se Déconnecter'),
-				]),
-			 
+					  m('span','Accueil'),
+				  ]),
+			  ]),
+			 m("button", {class: 'button level-right is-link subtitle',  onclick : function signOut() {
+				    var auth2 = gapi.auth2.getAuthInstance();
+				    auth2.signOut().then(function () {
+				      console.log('User signed out.');
+				      m.route.set("/login")
+				    });
+				  }}, 'Se Déconnecter'),
+		]),
+	 
+	  
+	   m('div',{class: 'tile is-ancestor', width:"50px"},[
+		  m('div',{class: 'tile box is-child'},[
+			  m("img",{class: 'is-rounded',"src":Profile.url}),
+			  m("h1", {class: 'title'}, Profile.name),
+			  m("h2", {class: 'subtitle'}, "@"+Profile.email.split("@",1)),
 			  
-			   m('div',{class: 'card'},[
-				    m('div',{class: 'card-content'},[
-					   m('div',{class: 'media'},[
-						  m('div',{class: 'media-left'},[
-							  m('figure',{class: 'image is-128x128'},[
-								  m("img",{class: 'is-rounded',"src":Profile.url}),	
-							  ]),
-						  ]),
-						  m('div',{class: 'media-content'},[
-							  m("p", {class: 'title is-4'}, Profile.name),
-							  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
-							  m('nav',{class: 'level-left'},[
-								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"120 "),
-									  ], " publications"),
-								  ]),
-									  
-								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"605K "),
-									  ], " abonnés"),
-								  ]),
-								  
-								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"123 "),
-									  ], " abonnements"),
-								  ]),
-									  
-							   ]),  
-							      
-							   m("p", {class: 'is-4'},[ 
-								   m('strong',{class:''},Profile.name),
-								]), 
-							   m('p',{class:''}, Profile.bio),
-					   		]),
-					    ]),
-					]),  
+			  m('nav',{class: 'level '},[
+				  m("div",{class: 'level-item has-text-centered'},[
+					  m('div', [
+						  m('p',{class:'heading'},"Posts"),
+						  m('p',{class:'title'},"120"),
+					  ]),
+				  ]),
+				  
+				  m("div",{class: 'level-item has-text-centered'},[
+					  m('div', [
+						  m('p',{class:'heading'},"Following"),
+						  m('p',{class:'title'},"123"),
+					  ]),
+				  ]),
+				  
+				  m("div",{class: 'level-item has-text-centered'}, [
+					  m('div', [
+						  m('p',{class:'heading'},"Follwers"),
+						  m('p',{class:'title'},"650K"),
+					  ]),
+				  ]),
+				  
 		      ]),  
-		      
-		 	  m("div",{class:'box'},m(PostView,{profile: Profile})),
-		 ]),
-		 m('div',{class:'column is-2'},""),
-	  ]),  
+	      ]),  
+	      m('div',{class:'tile box is-child'},m(PostForm)),
+      ]),  
+	  m("div",{class:'box'},m(PostView,{profile: Profile}))
 	])
   },
   loadList: function() {
@@ -203,7 +187,6 @@ var Profile={
           })
       .then(function(result) {
       	console.log("user_manager:",result)
-      	Profile.bio = result.properties.bio;
       })
   }
 }
