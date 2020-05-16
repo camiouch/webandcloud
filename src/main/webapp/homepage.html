@@ -29,20 +29,28 @@
 </head>
 <body>
 
-<section class="hero is-primary is-medium">
+<section class="hero is-light is-medium">
   <!-- Hero head: will stick at the top -->
   <div class="hero-head">
     <nav class="navbar">
       <div class="container">
         <div class="navbar-brand">
-          <a class="navbar-item">
-            <img src="/ressources/images/logo3.JPG" alt="Logo">
+          <a class="navbar-item" href="/secret">
+            <img src="/ressources/images/TinyGram2.PNG" alt="Logo"> <span class= "title"> | TinyGram </span>
           </a>
-          <span class="navbar-burger burger" data-target="navbarMenuHeroA">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
+          <div class="field has-addons navbar-item">
+		  <div class="control has-icons-left">
+		    <input class="input is-rounded is-small" type="text" placeholder="@username">
+		     <span class="icon is-small is-left">
+		        <i class="fas fa-search fa-xs"></i>
+		     </span>
+		  </div>
+		  <div class="control">
+		    <a class="button is-info is-rounded is-small">
+		      Search
+		    </a>
+		  </div>
+		</div>
         </div>
       </div>
     </nav>
@@ -82,20 +90,30 @@ var Profile={
 			m('div', {class:'column is-8 has-text-centered'}, [
 				m('div', {class:'level'}, [
 					 m("h1", {class: 'level-left '}, [
-						 m("a",{class: 'button is-primary is-inverted title'},[
+						 m("a",{class: 'level-item is-inverted', 'href': "homepage.html"},[
 							  m('span', {class:'icon'}, [
 								  m('i',{class:'fas fa-home'}),
 							  ]),
-							  m('span','Accueil'),
 						  ]),
+						  m("a",{class: 'level-item is-inverted'},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-user'}),
+							  ]),
+						  ]),
+						   
 					  ]),
-					 m("button", {class: 'button level-right is-link subtitle',  onclick : function signOut() {
+					 m("button", {class: 'button level-right is-link',  onclick : function signOut() {
 						    var auth2 = gapi.auth2.getAuthInstance();
 						    auth2.signOut().then(function () {
 						      console.log('User signed out.');
 						      m.route.set("/login")
 						    });
-						  }}, 'Se Déconnecter'),
+					 }}, [
+						    m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-sign-out-alt'}),
+							  ]),
+							  m('strong', " Se Déconnecter"),
+						  ]),
 				]),
 			 
 			  
@@ -119,7 +137,7 @@ var Profile={
 									  
 								  m("p",{class: 'level-item'},[
 									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"605K "),
+										  m('strong',{class:''},"605k "),
 									  ], " abonnés"),
 								  ]),
 								  
@@ -132,7 +150,7 @@ var Profile={
 							   ]),  
 							      
 							   m("p", {class: 'is-4'},[ 
-								   m('strong',{class:''},Profile.name),
+								   m('strong',{class:''},""+Profile.email.split("@",1)),
 								]), 
 							   m('p',{class:''}, Profile.bio),
 					   		]),
@@ -140,7 +158,7 @@ var Profile={
 					]),  
 		      ]),  
 		      
-		 	  m("div",{class:'box'},m(PostView,{profile: Profile})),
+		 	  m("div",{class:'box'},m(ShowPost,{profile: Profile})),
 		 ]),
 		 m('div',{class:'column is-2'},""),
 	  ]),  
@@ -253,6 +271,88 @@ var PostView = {
 		  }
 		}
 
+var ShowPost = {
+		oninit: function(vnode) { 
+	        console.log("PostShow initialized")
+	        vnode.attrs.profile.userManager()
+	        vnode.attrs.profile.loadList()     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.list.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": Profile.url}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'subtitle is-6'},[
+											  m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+										  ]),     
+								   	  ]),
+								   ]),
+								]),  
+						        m('div',{class: 'card-image'},[
+									m('figure',{class: 'image is-4by3', "alt" : "POST URL"},[
+										 m("img",{class: '',"src": item.properties.url}),
+										 
+									 ]),
+								]),
+								m('div',{class: 'card-content'},[
+									m('nav',{class: 'level is-mobile'},[
+									  m("div",{class: 'level-left'},[
+										  m('a',{class:' level-item', href:"#"}, [
+											  m('span',{class:'icon is-small'}, [
+												  m('i',{class:'far fa-heart'}),
+											  ]),
+										  ]),
+									  ]), 	  
+								  ]),  				 	 
+								       	  
+						  	  ]),
+						  	  
+						  	  m('footer',{class: 'card-footer'},[ 
+						  		 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',{class:'icon is-small'}, [
+													  m('i',{class:'fas fa-heart'}), 
+												  ]),
+												  m('strong', item.properties.likec+" Likes"),
+											  ]),
+										  ]), 	  
+									  ]),  
+								 ]), 
+								 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',[
+													 	 m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+												 	 ], " "+item.properties.body),
+											  ])
+										  ]) 	  
+									  ])  
+								 ]) 
+						  	  ])
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.next()}
+		 },
+	   "Next"),
+     ])
+  }
+}
 
 var PostForm = {
 		url:"",
@@ -302,7 +402,7 @@ function onSignIn(googleUser) {
 var nomUser = "";		
 var Login = {
   view: function() {
- 	return m('section', {class:'hero is-light is-fullheight-with-navbar'}, [
+ 	return m('section', {class:'hero is-white is-fullheight-with-navbar'}, [
  		m('div', {class:'hero-body'}, [
  			m('div', {class:'container'}, [
 		 		m('div',{class: 'columns ',},[		 					 
