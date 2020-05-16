@@ -35,7 +35,7 @@
     <nav class="navbar">
       <div class="container">
         <div class="navbar-brand">
-          <a class="navbar-item" href="/secret">
+          <a class="navbar-item" href="homepage.html">
             <img src="/ressources/images/TinyGram2.PNG" alt="Logo"> <span class= "title"> | TinyGram </span>
           </a>
           <div class="field has-addons navbar-item">
@@ -52,6 +52,34 @@
 		  </div>
 		</div>
         </div>
+        <div id="navbarMenuHeroA" class="navbar-menu">
+          <div class="navbar-end">
+            
+            <span class="navbar-item is-active">
+              <a class="button is-info is-inverted" onclick = "m.route.set('/secret')">
+                <span class="icon">
+                  <i class="fas fa-home"></i>
+                </span>
+              </a>
+            </span>
+            <span class="navbar-item">
+              <a class="button is-info is-inverted" onclick = "m.route.set('/profile')">
+                <span class="icon">
+                  <i class="fas fa-user"></i>
+                </span>
+              </a>
+            </span>
+            <span class="navbar-item">
+              <a class="button is-info is-inverted" onclick = "m.route.set('/post')">
+                <span class="icon">
+                  <i class="fas fa-camera"></i>
+                </span>
+              </a>
+            </span>
+                        
+          </div>
+        </div>
+        
       </div>
     </nav>
   </div>
@@ -64,6 +92,336 @@
 
 
 var HomePageWiew  = {
+		view: function() {
+			return m('div', {class:'container'}, [
+				m('div', m(HomePage)),
+		    ])
+		}
+		
+}	
+
+var HomePage={
+  name:"",
+  email:"",
+  ID:"",
+  url:"",
+  bio:"",
+  nextToken:"",
+  list:[],
+  oncreate: function() {
+     console.log("HomePage created")
+  },
+  view: function(){
+	return m('div', {class:'container'}, [
+		m('div',{class: 'columns ',},[
+			m('div',{class:'column is-2'},""),
+			m('div', {class:'column is-8 has-text-centered'}, [
+				m('div', {class:'level'}, [
+					 m("h1", {class: 'level-left '}, [
+						
+						 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+						      console.log('Homepage clicked from Home page');
+						      m.route.set("/secret")
+					 		}},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-home'}),
+							  ]),
+						  ]),
+						  
+						  m("a",{class: 'level-item is-inverted',onclick : function () {
+							      console.log('Profile clicked from Home page');
+							      m.route.set("/profile")
+						 }},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-user'}),
+							  ]),
+						  ]),
+						  
+						  m("a",{class: 'level-item is-inverted',onclick : function () {
+						      console.log('Post clicked from Post page');
+						      m.route.set("/post")
+						  }},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-camera'}),
+							  ]),
+						  ]),
+					  ]),
+					 m("button", {class: 'button level-right is-link',  onclick : function () {
+						    var auth2 = gapi.auth2.getAuthInstance();
+						    auth2.signOut().then(function () {
+						      console.log('User signed out.');
+						      m.route.set("/login")
+						    });
+					 }}, [
+						    m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-sign-out-alt'}),
+							  ]),
+							  m('strong', " Se Déconnecter"),
+						  ]),
+				]),		  
+		      
+		 	  m("div",{class:'box'},m(ShowPost,{profile: HomePage})),
+		 ]),
+		 m('div',{class:'column is-2'},""),
+	  ]),  
+	])
+  },
+  loadList: function() {
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(HomePage.ID)
+          })
+      .then(function(result) {
+      	console.log("load_list:",result)
+      	HomePage.list=result.items
+          if ('nextPageToken' in result) {
+	        	HomePage.nextToken= result.nextPageToken
+          } else {
+          	HomePage.nextToken=""
+          }})
+  },
+  next: function() {
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/collectionresponse_entity",
+          params: {
+        	  'next':HomePage.nextToken,
+        	  'access_token': encodeURIComponent(HomePage.ID)
+          }
+       })
+      .then(function(result) {
+      	console.log("next:",result)
+      	result.items.map(function(item){HomePage.list.push(item)})
+          if ('nextPageToken' in result) {
+	        	HomePage.nextToken= result.nextPageToken
+          } else {
+          	HomePage.nextToken=""
+          }})
+  },
+  
+  userManager : function() {
+	  var data={'profilUrl':HomePage.url,
+				'name':HomePage.name}
+		   	console.log("post:"+data)
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/userManager"+'?access_token='+encodeURIComponent(HomePage.ID),
+          params: data,
+          })
+      .then(function(result) {
+      	console.log("user_manager:",result)
+      	HomePage.bio = result.properties.bio;
+      })
+  }
+}
+
+//----------------------------------Layout pour afficher une liste de POSTS-------------------------------------//
+var ShowPost = {
+		oninit: function(vnode) { 
+	        console.log("PostShow initialized")
+	        vnode.attrs.profile.userManager()
+	        vnode.attrs.profile.loadList()     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.list.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": HomePage.url}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'subtitle is-6'},[
+											  m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+										  ]),     
+								   	  ]),
+								   ]),
+								]),  
+						        m('div',{class: 'card-image'},[
+									m('figure',{class: 'image is-3by2', "alt" : "POST URL"},[
+										 m("img",{class: '',"src": item.properties.url}),
+										 
+									 ]),
+								]),
+								m('div',{class: 'card-content'},[
+									m('nav',{class: 'level is-mobile'},[
+									  m("div",{class: 'level-left'},[
+										  m('a',{class:' level-item', href:"#"}, [
+											  m('span',{class:'icon is-small'}, [
+												  m('i',{class:'far fa-heart'}),
+											  ]),
+										  ]),
+									  ]), 	  
+								  ]),  				 	 
+								       	  
+						  	  ]),
+						  	  
+						  	  m('footer',{class: 'card-footer'},[ 
+						  		 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',{class:'icon is-small'}, [
+													  m('i',{class:'fas fa-heart'}), 
+												  ]),
+												  m('strong', item.properties.likec+" Likes"),
+											  ]),
+										  ]), 	  
+									  ]),  
+								 ]), 
+								 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',[
+													 	 m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+												 	 ], " "+item.properties.body),
+											  ])
+										  ]) 	  
+									  ])  
+								 ]) 
+						  	  ])
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.next()}
+		 },
+	   "Next"),
+     ])
+  }
+}
+//-----------------------------------------------------------------------------------------------------------//
+
+//----------------------------------Formulaire POST-------------------------------------//
+var PostForm = {
+		url:"",
+		body:"",
+		  view: function() {
+		    return m('div',{class:'container '},[
+		    	m('div', {class:'panel'},[
+		    		m("h2", {class: 'panel-heading'}, 'Nouvelle Publication'),
+			    m("form", {
+			      onsubmit: function(e) {
+			        e.preventDefault()
+					if (PostForm.url=="") {PostForm.url="https://dummyimage.com/320x200/000/fff&text"} 
+					if (PostForm.body=="") {PostForm.body="post-body \n"+Date.now()}
+			        Post.postMessage()
+			      }},[
+		       
+			      m('div', {class:'field panel-block is-horizontal'},[
+			         m("label", {class:'label field-label'},"URL"),
+			         m('div',{class:'control'}, m("input[type=text]", {
+			          class:'input is-rounded',
+			          placeholder:"Your image url",
+			             oninput: function(e) {PostForm.url = e.target.value}})),
+	//		         m("img",{"src":this.url}),
+			      ]),
+			      m('div',{class:'field panel-block is-horizontal'},[
+			    	  m("label", {class: 'label field-label'},"Body"),
+			          m('div',{class:'control '},m("input[type=textarea]", {
+			        class:'textarea',
+			        placeholder:"your comments",
+			        oninput: function(e) { PostForm.body = e.target.value }})),
+			        ]),
+			      m('div',{class:'field is-grouped is-grouped-right'},[
+				      m('div',{class:'control'},m("button[type=submit]", {class:'button is-primary'},"Poster")),
+				      m('div',{class:'control'},m("button[type=reset]", {class:'button is-light'},"Annuler")),
+			     ])
+		       ])
+		     ])
+		   ])
+		  }
+		}
+//---------------------------------------------------------------------------------------------------//
+//------------------------------------------Page du formuaire d'un post---------------------------------------------------------//
+var Post = {
+		view: function() {
+		 	return m('section', {class:'hero is-white is-medium'}, [
+		 		m('div', {class:'hero-body'}, [
+		 			m('div', {class:'container'}, [
+				 		m('div',{class: 'columns ',},[		 					 
+				 			m('div',{class:'column is-2'},""),
+							m('div', {class:'column is-8'}, [
+								m('div', {class:'level'}, [
+									 m("h1", {class: 'level-left '}, [
+										 
+										 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+										      console.log('Homepage clicked from Post page');
+										      m.route.set("/secret")
+									 		}},[
+											  m('span', {class:'icon'}, [
+												  m('i',{class:'fas fa-home'}),
+											  ]),
+										  ]),
+										  
+										  m("a",{class: 'level-item is-inverted',onclick : function () {
+											      console.log('Profile clicked from Post page');
+											      m.route.set("/profile")
+										  }},[
+											  m('span', {class:'icon'}, [
+												  m('i',{class:'fas fa-user'}),
+											  ]),
+										  ]),
+										  
+										  m("a",{class: 'level-item is-inverted',onclick : function () {
+										      console.log('Post clicked from Post page');
+										      m.route.set("/post")
+										  }},[
+											  m('span', {class:'icon'}, [
+												  m('i',{class:'fas fa-camera'}),
+											  ]),
+										  ]),
+										  
+									  ]),
+									 m("button", {class: 'button level-right is-link',  onclick : function() {
+										    var auth2 = gapi.auth2.getAuthInstance();
+										    auth2.signOut().then(function () {
+										      console.log('User signed out.');
+										      m.route.set("/login")
+										    });
+									 }}, [
+										    m('span', {class:'icon'}, [
+												  m('i',{class:'fas fa-sign-out-alt'}),
+											  ]),
+											  m('strong', " Se Déconnecter"),
+										  ]),
+								]),		  
+						      
+						 	  m("div",{class:'box'},m(PostForm)),
+							 ]),
+							 m('div',{class:'column is-2'},""),			     
+				 		 ]),
+		 		       ]),  
+		 	        ]),
+		        ])
+		    },
+		  postMessage: function() {
+			var data={'url':PostForm.url,
+				'body':PostForm.body}
+		   	console.log("post:"+data)
+			return m.request({
+		   		method: "POST",
+		   		url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(HomePage.ID),
+		       	params: data,
+		   	})
+		    	.then(function(result) {
+		 			console.log("post_message: ",result)
+		 			m.route.set("/secret")
+		   	 	})
+		  }
+}
+//---------------------------------------------------------------------------------------------------//
+
+//---------------------------------------------------Page du profil---------------------------------------------------//  
+var ProfileView  = {
 		view: function() {
 			return m('div', {class:'container'}, [
 				m('div', m(Profile)),
@@ -90,19 +448,37 @@ var Profile={
 			m('div', {class:'column is-8 has-text-centered'}, [
 				m('div', {class:'level'}, [
 					 m("h1", {class: 'level-left '}, [
-						 m("a",{class: 'level-item is-inverted', 'href': "homepage.html"},[
+						
+						 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+						      console.log('Homepage clicked from Profil page');
+						      m.route.set("/secret")
+					 		}},[
 							  m('span', {class:'icon'}, [
 								  m('i',{class:'fas fa-home'}),
 							  ]),
 						  ]),
-						  m("a",{class: 'level-item is-inverted'},[
+						  
+						  m("a",{class: 'level-item is-inverted is-active',onclick : function (){
+							    
+							      console.log('Profil link is clicked.');
+							      m.route.set("/profile")
+							    
+							 }},[
 							  m('span', {class:'icon'}, [
 								  m('i',{class:'fas fa-user'}),
 							  ]),
 						  ]),
-						   
+						  
+						  m("a",{class: 'level-item is-inverted',onclick : function () {
+						      console.log('Post clicked from Post page');
+						      m.route.set("/post")
+						  }},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-camera'}),
+							  ]),
+						  ]),
 					  ]),
-					 m("button", {class: 'button level-right is-link',  onclick : function signOut() {
+					 m("button", {class: 'button level-right is-link',  onclick : function () {
 						    var auth2 = gapi.auth2.getAuthInstance();
 						    auth2.signOut().then(function () {
 						      console.log('User signed out.');
@@ -196,20 +572,7 @@ var Profile={
           	Profile.nextToken=""
           }})
   },
-  postMessage: function() {
-	var data={'url':PostForm.url,
-		'body':PostForm.body}
-   	console.log("post:"+data)
-	return m.request({
-   		method: "POST",
-   		url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(Profile.ID),
-       	params: data,
-   	})
-    	.then(function(result) {
- 			console.log("post_message:",result)
- 			Profile.loadList()
-   	 	})
-  },
+  
   userManager : function() {
 	  var data={'profilUrl':Profile.url,
 				'name':Profile.name}
@@ -226,183 +589,43 @@ var Profile={
   }
 }
 
-var PostView = {
-		 oninit: function(vnode) {
-			 
-		        console.log("PostView initialized")
-		        vnode.attrs.profile.userManager()
-		        vnode.attrs.profile.loadList()
-		        
-		    },
-		  view: function(vnode) {
-		   	return m('div', [
-			  m('div',{class:'subtitle'},"Mes Publications"),
-			  m('table', {class:'table is-striped',"table":"is-striped"},[
-			    m('tr', [
-				  m('th', {width:"50px"}, "like"),
-				  m('th', {width:"50px"}, "del"),
-			      m('th', {width:"50px"}, "Bodys"),
-			      m('th', {width:"50px"}, "Urls"),
-			      m('th', {width:"50px"}, "Like"),
-			    ]),
-			    vnode.attrs.profile.list.map(function(item) {
-			      return m("tr", [
-		            m("td", m("button", {onclick: function(e) {
-						console.log("like:"+item.key.id)
-						//TO DO
-		                 }},"like")),
-		            m("td", m("button", {onclick: function(e) {
-	     				console.log("del:"+item.key.id)
-	     				//TO DO
-		                 }},"del")),
-			        m('td', m('label', item.properties.body)),
-			        m('td', m('img', {class: 'is-rounded', 'src': item.properties.url})),
-			        m('td', m('label', item.properties.likec)),
-			      ])
-			    }),
-//			    m("div", isError ? "An error occurred" : "Saved"),
-			    m('button',{
-				      class: 'button is-link',
-				      onclick: function(e) {vnode.attrs.profile.next()}
-				      },
-				  "Next"),
-			   ])
-			 ])
-		  }
-		}
+//----------------------------------------------------------------------------------------//
 
-var ShowPost = {
-		oninit: function(vnode) { 
-	        console.log("PostShow initialized")
-	        vnode.attrs.profile.userManager()
-	        vnode.attrs.profile.loadList()     
-	    },
-	    view: function(vnode) {
-		    	return m('div', [ 
-		   		  vnode.attrs.profile.list.map(function(item) {
-				      return m('div',{class: ''},[ 
-			      			m('div',{class: 'card'},[
-						    	m('div',{class: 'card-content'},[
-								   m('div',{class: 'media'},[
-									  m('div',{class: 'media-left'},[
-										  m('figure',{class: 'image is-48x48'},[
-											  m("img",{class: 'is-rounded',"src": Profile.url}),	
-										  ]),
-									  ]),
-									  m('div',{class: 'media-content'},[
-										  m("p", {class: 'subtitle is-6'},[
-											  m('strong',{class:''},""+item.properties.owner.split("@",1)), 
-										  ]),     
-								   	  ]),
-								   ]),
-								]),  
-						        m('div',{class: 'card-image'},[
-									m('figure',{class: 'image is-4by3', "alt" : "POST URL"},[
-										 m("img",{class: '',"src": item.properties.url}),
-										 
-									 ]),
-								]),
-								m('div',{class: 'card-content'},[
-									m('nav',{class: 'level is-mobile'},[
-									  m("div",{class: 'level-left'},[
-										  m('a',{class:' level-item', href:"#"}, [
-											  m('span',{class:'icon is-small'}, [
-												  m('i',{class:'far fa-heart'}),
-											  ]),
-										  ]),
-									  ]), 	  
-								  ]),  				 	 
-								       	  
-						  	  ]),
-						  	  
-						  	  m('footer',{class: 'card-footer'},[ 
-						  		 m("p", {class: 'card-footer-item'},[
-						  			 m('nav',{class: 'level is-mobile'},[
-										  m("div",{class: 'level-left'},[
-											  m('p',{class:' level-item'}, [
-												  m('span',{class:'icon is-small'}, [
-													  m('i',{class:'fas fa-heart'}), 
-												  ]),
-												  m('strong', item.properties.likec+" Likes"),
-											  ]),
-										  ]), 	  
-									  ]),  
-								 ]), 
-								 m("p", {class: 'card-footer-item'},[
-						  			 m('nav',{class: 'level is-mobile'},[
-										  m("div",{class: 'level-left'},[
-											  m('p',{class:' level-item'}, [
-												  m('span',[
-													 	 m('strong',{class:''},""+item.properties.owner.split("@",1)), 
-												 	 ], " "+item.properties.body),
-											  ])
-										  ]) 	  
-									  ])  
-								 ]) 
-						  	  ])
-						  	  
-						    ]),
-						    m('hr')
-		])				    
-	  }),
-	    m('button',{
-		      class: 'button is-link',
-		      onclick: function(e) {vnode.attrs.profile.next()}
-		 },
-	   "Next"),
-     ])
-  }
+
+//--------------------------------------------------Page des followers---------------------------------------------------//  
+var FollowersView =	{
+		
 }
+//------------------------------------------------------------------------------------------------------//
 
-var PostForm = {
-		url:"",
-		body:"",
-		  view: function() {
-		    return m("form", {
-		      onsubmit: function(e) {
-		        e.preventDefault()
-				if (url="") {url="https://dummyimage.com/320x200/000/fff&text="+Date.now()} 
-				if (body="") {body="post-body \n"+Date.now()}
-		        Profile.postMessage()
-		      }}, 
-		      [
-		    	m('div', {class:'field'},[
-		    	 m("h2", {class: 'subtitle'}, 'Nouvelle Publication'),
-		         m("label", {class:'label'},"URL"),
-		         m('div',{class:'control'}, m("input[type=text]", {
-		          class:'input is-rounded',
-		          placeholder:"Your url",
-		             oninput: function(e) {PostForm.url = e.target.value}})),
-//		         m("img",{"src":this.url}),
-		        ]),
-		      m('div',{class:'field'},[
-		    	  m("label", {class: 'label'},"Body"),
-		          m('div',{class:'control'},m("input[type=textarea]", {
-		        class:'textarea',
-		        placeholder:"your text",
-		        oninput: function(e) { PostForm.body = e.target.value }})),
-		        ]),
-		      m('div',{class:'control'},m("button[type=submit]", {class:'button is-link'},"Poster")),
-		    ])
-		  }
-		}
+//---------------------------------------------------Page des followings---------------------------------------------------//  
+var FollowingsView =	{
+		
+}
+//---------------------------------------------------------------------------------------------------------//
 
+//----------------------fonction de google login---------------------------------------------------//
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
+  HomePage.name=profile.getName();
+  HomePage.email=profile.getEmail();
+  HomePage.ID=googleUser.getAuthResponse().id_token;
+  HomePage.url=profile.getImageUrl();
+  
   Profile.name=profile.getName();
   Profile.email=profile.getEmail();
   Profile.ID=googleUser.getAuthResponse().id_token;
   Profile.url=profile.getImageUrl();
   
-  nomUser = ""+profile.getName(); //pour avoir une version en string 
   m.route.set("/secret")
 }
+//-----------------------------------------------------------------------------------------------------------------------//
 
-  
-var nomUser = "";		
+
+//---------------------------------------------------Page du LOGIN---------------------------------------------------//
 var Login = {
   view: function() {
- 	return m('section', {class:'hero is-white is-fullheight-with-navbar'}, [
+ 	return m('section', {class:'hero is-white  is-medium'}, [
  		m('div', {class:'hero-body'}, [
  			m('div', {class:'container'}, [
 		 		m('div',{class: 'columns ',},[		 					 
@@ -426,16 +649,32 @@ var Login = {
 }
 
 
-
+//---------------------------------------------------Chargement du bloc vDom - Routage ---------------------------------------------------//
 m.route(document.getElementById("vDom"), "/secret", {
   "/secret": { onmatch: function() {
-            	if (Profile.ID=="") {m.route.set("/login")}
+            	if (HomePage.ID=="") {m.route.set("/login")}
             	else return HomePageWiew
         		}},
-  "/login": Login
+  "/login": Login,
+  "/profile":{ onmatch: function() {
+			  	if (Profile.ID=="") {m.route.set("/login")}
+				else return ProfileView
+			}},
+	"/post":{ onmatch: function() {
+	  	if (HomePage.ID=="") {m.route.set("/login")}
+		else return Post
+	}},
+  //"/followers" : { onmatch: function() {
+    //			  	if (Profile.ID=="") {m.route.set("/login")}
+	//			else return Followers
+		//	}},
+//"/followings" : { onmatch: function() {
+   //			  	if (Profile.ID=="") {m.route.set("/login")}
+//			else return Followings
+		//}},
 })
 
- 
+//----------------------------------------------------------------------------------------------------// 
 
 		
 </script>

@@ -1,0 +1,361 @@
+<html lang="en">
+<head>
+<meta name="google-signin-scope" content="profile email">
+<meta name="google-signin-client_id"
+	content="331048952451-9k74vlboc2n4vvh12jkct30fhc2euc85.apps.googleusercontent.com">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="shortcut icon" href="/ressources/images/logo2.PNG" type="image/x-icon">
+	
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+	
+<meta name="description" content="TinyGram is light version of Intagram.">
+
+  <title>TinyGram | Sharing beautifull moments</title>
+
+
+<script defer
+	src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+
+<script src="https://unpkg.com/mithril/mithril.js"></script>
+
+
+</head>
+<body>
+
+<section class="hero is-light is-medium">
+  <!-- Hero head: will stick at the top -->
+  <div class="hero-head">
+    <nav class="navbar">
+      <div class="container">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="homepage.html">
+            <img src="/ressources/images/TinyGram2.PNG" alt="Logo"> <span class= "title"> | TinyGram </span>
+          </a>
+          <div class="field has-addons navbar-item">
+		  <div class="control has-icons-left">
+		    <input class="input is-rounded is-small" type="text" placeholder="@username">
+		     <span class="icon is-small is-left">
+		        <i class="fas fa-search fa-xs"></i>
+		     </span>
+		  </div>
+		  <div class="control">
+		    <a class="button is-info is-rounded is-small">
+		      Search
+		    </a>
+		  </div>
+		</div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</section>
+<!-- Partie qui sera manipulée par Mithril, le virtual dom -->
+<section>
+	<div id="vDom"> </div>
+</section>
+<script>
+
+
+var ProfileView  = {
+		view: function() {
+			return m('div', {class:'container'}, [
+				m('div', m(Profile)),
+		    ])
+		}
+		
+}	
+
+var Profile={
+  name:"",
+  email:"",
+  ID:"",
+  url:"",
+  bio:"",
+  nextToken:"",
+  list:[],
+  oncreate: function() {
+     console.log("Profile created")
+  },
+  view: function(){
+	return m('div', {class:'container'}, [
+		m('div',{class: 'columns ',},[
+			m('div',{class:'column is-2'},""),
+			m('div', {class:'column is-8 has-text-centered'}, [
+				m('div', {class:'level'}, [
+					 m("h1", {class: 'level-left '}, [
+						 m("a",{class: 'level-item is-inverted', 'href': "homepage.html"},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-home'}),
+							  ]),
+						  ]),
+						  m("a",{class: 'level-item is-inverted is-active'},[
+							  m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-user'}),
+							  ]),
+						  ]),
+						   
+					  ]),
+					 m("button", {class: 'button level-right is-link',  onclick : function signOut() {
+						    var auth2 = gapi.auth2.getAuthInstance();
+						    auth2.signOut().then(function () {
+						      console.log('User signed out.');
+						      m.route.set("/login")
+						    });
+					 }}, [
+						    m('span', {class:'icon'}, [
+								  m('i',{class:'fas fa-sign-out-alt'}),
+							  ]),
+							  m('strong', " Se Déconnecter"),
+						  ]),
+				]),
+			 
+			  
+			   m('div',{class: 'card'},[
+				    m('div',{class: 'card-content'},[
+					   m('div',{class: 'media'},[
+						  m('div',{class: 'media-left'},[
+							  m('figure',{class: 'image is-128x128'},[
+								  m("img",{class: 'is-rounded',"src":Profile.url}),	
+							  ]),
+						  ]),
+						  m('div',{class: 'media-content'},[
+							  m("p", {class: 'title is-4'}, Profile.name),
+							  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
+							  m('nav',{class: 'level-left'},[
+								  m("p",{class: 'level-item'},[
+									  m('a',{class:' is-link', href:"#"}, [
+										  m('strong',{class:''},"120 "),
+									  ], " publications"),
+								  ]),
+									  
+								  m("p",{class: 'level-item'},[
+									  m('a',{class:' is-link', href:"#"}, [
+										  m('strong',{class:''},"605k "),
+									  ], " abonnés"),
+								  ]),
+								  
+								  m("p",{class: 'level-item'},[
+									  m('a',{class:' is-link', href:"#"}, [
+										  m('strong',{class:''},"123 "),
+									  ], " abonnements"),
+								  ]),
+									  
+							   ]),  
+							      
+							   m("p", {class: 'is-4'},[ 
+								   m('strong',{class:''},""+Profile.email.split("@",1)),
+								]), 
+							   m('p',{class:''}, Profile.bio),
+					   		]),
+					    ]),
+					]),  
+		      ]),  
+		      
+		 	  m("div",{class:'box'},m(ShowPost,{profile: Profile})),
+		 ]),
+		 m('div',{class:'column is-2'},""),
+	  ]),  
+	])
+  },
+  loadList: function() {
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(Profile.ID)
+          })
+      .then(function(result) {
+      	console.log("load_list:",result)
+      	Profile.list=result.items
+          if ('nextPageToken' in result) {
+	        	Profile.nextToken= result.nextPageToken
+          } else {
+          	Profile.nextToken=""
+          }})
+  },
+  next: function() {
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/collectionresponse_entity",
+          params: {
+        	  'next':Profile.nextToken,
+        	  'access_token': encodeURIComponent(Profile.ID)
+          }
+       })
+      .then(function(result) {
+      	console.log("next:",result)
+      	result.items.map(function(item){Profile.list.push(item)})
+          if ('nextPageToken' in result) {
+	        	Profile.nextToken= result.nextPageToken
+          } else {
+          	Profile.nextToken=""
+          }})
+  },
+  postMessage: function() {
+	var data={'url':PostForm.url,
+		'body':PostForm.body}
+   	console.log("post:"+data)
+	return m.request({
+   		method: "POST",
+   		url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(Profile.ID),
+       	params: data,
+   	})
+    	.then(function(result) {
+ 			console.log("post_message:",result)
+ 			Profile.loadList()
+   	 	})
+  },
+  userManager : function() {
+	  var data={'profilUrl':Profile.url,
+				'name':Profile.name}
+		   	console.log("post:"+data)
+      return m.request({
+          method: "GET",
+          url: "_ah/api/myApi/v1/userManager"+'?access_token='+encodeURIComponent(Profile.ID),
+          params: data,
+          })
+      .then(function(result) {
+      	console.log("user_manager:",result)
+      	Profile.bio = result.properties.bio;
+      })
+  }
+}
+
+
+var ShowPost = {
+		oninit: function(vnode) { 
+	        console.log("PostShow initialized")
+	        vnode.attrs.profile.userManager()
+	        vnode.attrs.profile.loadList()     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.list.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": Profile.url}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'subtitle is-6'},[
+											  m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+										  ]),     
+								   	  ]),
+								   ]),
+								]),  
+						        m('div',{class: 'card-image'},[
+									m('figure',{class: 'image is-4by3', "alt" : "POST URL"},[
+										 m("img",{class: '',"src": item.properties.url}),
+										 
+									 ]),
+								]),
+								m('div',{class: 'card-content'},[
+									m('nav',{class: 'level is-mobile'},[
+									  m("div",{class: 'level-left'},[
+										  m('a',{class:' level-item', href:"#"}, [
+											  m('span',{class:'icon is-small'}, [
+												  m('i',{class:'far fa-heart'}),
+											  ]),
+										  ]),
+									  ]), 	  
+								  ]),  				 	 
+								       	  
+						  	  ]),
+						  	  
+						  	  m('footer',{class: 'card-footer'},[ 
+						  		 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',{class:'icon is-small'}, [
+													  m('i',{class:'fas fa-heart'}), 
+												  ]),
+												  m('strong', item.properties.likec+" Likes"),
+											  ]),
+										  ]), 	  
+									  ]),  
+								 ]), 
+								 m("p", {class: 'card-footer-item'},[
+						  			 m('nav',{class: 'level is-mobile'},[
+										  m("div",{class: 'level-left'},[
+											  m('p',{class:' level-item'}, [
+												  m('span',[
+													 	 m('strong',{class:''},""+item.properties.owner.split("@",1)), 
+												 	 ], " "+item.properties.body),
+											  ])
+										  ]) 	  
+									  ])  
+								 ]) 
+						  	  ])
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.next()}
+		 },
+	   "Next"),
+     ])
+  }
+}
+
+var Followers = {
+		
+}
+
+var Followings = {
+		
+}
+
+function onSignIn(googleUser) {
+  var profile = googleUser.getBasicProfile();
+  Profile.name=profile.getName();
+  Profile.email=profile.getEmail();
+  Profile.ID=googleUser.getAuthResponse().id_token;
+  Profile.url=profile.getImageUrl();
+  
+  nomUser = ""+profile.getName(); //pour avoir une version en string 
+  m.route.set("/secret")
+}
+
+
+m.route(document.getElementById("vDom"), "/secret", {
+  "/secret": { onmatch: function() {
+            	if (Profile.ID=="") {m.route.set("/login")}
+            	else return ProfileView
+        		}},
+  "/login": Login,
+  "/followers" : Followers,
+  "/followings" : Followings
+  
+})
+
+ 
+
+		
+</script>
+	
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p>
+        <strong>TinyGram</strong> by <a href="#">Amadou BAH - Elysée NONNONHOU - Vanessa KAMGUE</a>. The source code is licensed
+        <a href="http://opensource.org/licenses/mit-license.php">MIT</a> and it is availlable on  
+        <a href="https://github.com/Danpitamaci/webandcloud.git">GitHub</a>.
+      </p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
