@@ -55,9 +55,16 @@ public class TinyGramEndpoint {
 	
 	//-----------------------USER ENTITY METHODS--------------------------------------------//
 	
-	
+	     
 	    //Checking if user has already added. If no, add him
-		@ApiMethod(name = "userManager", httpMethod = HttpMethod.GET)
+	    /**
+	     * 
+	     * @param user
+	     * @param up
+	     * @return TGuser created entity
+	     * @throws UnauthorizedException
+	     */
+		@ApiMethod(name = "userManager",path="userManager", httpMethod = HttpMethod.GET)
 		public Entity userManager(User user, TGUserProfil up) throws UnauthorizedException {
 			
 			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -113,6 +120,39 @@ public class TinyGramEndpoint {
 		}
 		
 		
+		//-----------------------------------------------------------------------------------------------//
+		/**
+		 *   
+		 * @param user
+		 * @param cursorString
+		 * @return collection of TGUser entities
+		 * @throws UnauthorizedException
+		 */
+		@ApiMethod(name = "get_users", path="users" ,httpMethod = ApiMethod.HttpMethod.GET)
+		public CollectionResponse<Entity> getTGUsers(User user, @Nullable @Named("next") String cursorString)
+				throws UnauthorizedException {
+
+			if (user == null) {
+				throw new UnauthorizedException("Invalid credentials");
+			}
+			
+			Query q = new Query("TGUser");
+
+			
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			PreparedQuery pq = datastore.prepare(q);
+
+			FetchOptions fetchOptions = FetchOptions.Builder.withLimit(10);
+
+			if (cursorString != null) {
+				fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
+			}
+
+			QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
+			cursorString = results.getCursor().toWebSafeString();
+
+			return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
+		}
 		
 //------------------------------------POST ENTITY METHODS--------------------------------------------//	
 		

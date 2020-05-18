@@ -130,6 +130,7 @@ var HomePage={
 						  
 						  m("a",{class: 'level-item is-inverted',onclick : function () {
 							      console.log('Profile clicked from Home page');
+							      ViewToShow = ShowPost;
 							      m.route.set("/profile")
 						 }},[
 							  m('span', {class:'icon'}, [
@@ -160,7 +161,12 @@ var HomePage={
 						  ]),
 				]),		  
 		      
-		 	  m("div",{class:'box'},m(ShowPost,{profile: HomePage})),
+		 	  m("div",{class:'box'},[
+		 		  m('div',{class: 'card-header is-light'},[
+    					m('div',{class: 'card-header-title is-centered '}, "Accueil")
+    				]),
+		 		  m(ShowPost,{profile: HomePage})
+		 		  ]),
 		 ]),
 		 m('div',{class:'column is-2'},""),
 	  ]),  
@@ -437,9 +443,11 @@ var Profile={
   url:"",
   bio:"",
   nextToken:"",
-  list:[],
+  list:[], //liste de ses posts
+  
   oncreate: function() {
      console.log("Profile created")
+     console.log("ViewToShow :",ViewToShow)
   },
   view: function(){
 	return m('div', {class:'container'}, [
@@ -461,6 +469,7 @@ var Profile={
 						  m("a",{class: 'level-item is-inverted is-active',onclick : function (){
 							    
 							      console.log('Profil link is clicked.');
+							     
 							      m.route.set("/profile")
 							    
 							 }},[
@@ -494,6 +503,9 @@ var Profile={
 			 
 			  
 			   m('div',{class: 'card'},[
+				   m('div',{class: 'card-header is-light'},[
+     					m('div',{class: 'card-header-title is-centered '}, "Profil")
+     				]),
 				    m('div',{class: 'card-content'},[
 					   m('div',{class: 'media'},[
 						  m('div',{class: 'media-left'},[
@@ -506,20 +518,32 @@ var Profile={
 							  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
 							  m('nav',{class: 'level-left'},[
 								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"120 "),
+									  m('a',{class:' is-link', onclick : function () {
+									      console.log('Posts clicked from Profil page');
+									     
+									      m.route.set("/profile")
+									  }}, [
+										  m('strong',{class:''}, Profile.list.length), //TO DO : nb de posts
 									  ], " publications"),
 								  ]),
 									  
 								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"605k "),
+									  m('a',{class:' is-link', onclick : function () {
+									      console.log('Followers clicked from Profil page yess');
+									     
+									      m.route.set("/followers")
+									  }}, [
+										  m('strong',{class:''},"100k "), //TO DO : nb de followers
 									  ], " abonnés"),
 								  ]),
 								  
 								  m("p",{class: 'level-item'},[
-									  m('a',{class:' is-link', href:"#"}, [
-										  m('strong',{class:''},"123 "),
+									  m('a',{class:' is-link', onclick : function () {
+									      console.log('Followings clicked from Profil page');
+									      
+									      m.route.set("/followings")
+									  }}, [
+										  m('strong',{class:''},"300 "), //TO DO : nb de followings
 									  ], " abonnements"),
 								  ]),
 									  
@@ -546,7 +570,7 @@ var Profile={
           url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(Profile.ID)
           })
       .then(function(result) {
-      	console.log("load_list:",result)
+      	console.log("load_list profile:",result)
       	Profile.list=result.items
           if ('nextPageToken' in result) {
 	        	Profile.nextToken= result.nextPageToken
@@ -586,21 +610,446 @@ var Profile={
       	console.log("user_manager:",result)
       	Profile.bio = result.properties.bio;
       })
-  }
+  },
+  
 }
 
 //----------------------------------------------------------------------------------------//
 
 
 //--------------------------------------------------Page des followers---------------------------------------------------//  
-var FollowersView =	{
+var FollowersView  = {
+		view: function() {
+			return m('div', {class:'container'}, [
+				m('div', m(Followers)),
+		    ])
+		}
 		
+}
+var ShowFollowers =	{
+		
+		
+		oninit: function(vnode) { 
+			
+			vnode.attrs.profile.loadFollowers()      
+	        console.log("Followers initialized")	     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.followers.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+			      				
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": item.properties.profilUrl}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'title is-4'}, item.properties.name),
+										  m("p", {class: 'is-4'},[
+											  m('strong',{class:''},""+item.properties.pseudo), 
+										  ]), 
+										  
+										  m('p',{class:''}, item.properties.bio),										  
+								   	  ]),
+								   	  
+								   	 m('div',{class: 'media-right'},[
+										  m("button", {class: 'button is-primary'}, "S'abonner") // TO DO : pour follow										  
+								   	  ]),
+								   	  
+								   ]),
+								]),  					      
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.nextFollowers()}
+		 },
+	   "Next "),
+     ])
+  }		              
+	    	  
+}
+
+var Followers = {
+		  
+		  nextToken:"",
+		  followers:[], //abonnés
+		  oncreate: function() {
+		     console.log("Followers created")
+		  },
+		  view: function(){
+			return m('div', {class:'container'}, [
+				m('div',{class: 'columns ',},[
+					m('div',{class:'column is-2'},""),
+					m('div', {class:'column is-8 has-text-centered'}, [
+						m('div', {class:'level'}, [
+							 m("h1", {class: 'level-left '}, [
+								
+								 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+								      console.log('Homepage clicked from Profil page');
+								      m.route.set("/secret")
+							 		}},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-home'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted is-active',onclick : function (){
+									    
+									      console.log('Profil link is clicked.');
+									   
+									      m.route.set("/profile")
+									    
+									 }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-user'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted',onclick : function () {
+								      console.log('Post clicked from Post page');
+								      m.route.set("/post")
+								  }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-camera'}),
+									  ]),
+								  ]),
+							  ]),
+							 m("button", {class: 'button level-right is-link',  onclick : function () {
+								    var auth2 = gapi.auth2.getAuthInstance();
+								    auth2.signOut().then(function () {
+								      console.log('User signed out.');
+								      m.route.set("/login")
+								    });
+							 }}, [
+								    m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-sign-out-alt'}),
+									  ]),
+									  m('strong', " Se Déconnecter"),
+								  ]),
+						]),
+					 
+					  
+					   m('div',{class: 'card'},[
+						   m('div',{class: 'card-header is-light'},[
+		      					m('div',{class: 'card-header-title is-centered '}, "Abonnés")
+		      				]),
+						    m('div',{class: 'card-content'},[
+							   m('div',{class: 'media'},[
+								  m('div',{class: 'media-left'},[
+									  m('figure',{class: 'image is-128x128'},[
+										  m("img",{class: 'is-rounded',"src":Profile.url}),	
+									  ]),
+								  ]),
+								  m('div',{class: 'media-content'},[
+									  m("p", {class: 'title is-4'}, Profile.name),
+									  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
+									  m('nav',{class: 'level-left'},[
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Posts clicked from Profil page');
+											     
+											      m.route.set("/profile")
+											  }}, [
+												  m('strong',{class:''}, Profile.list.length), //TO DO : nb de posts
+											  ], " publications"),
+										  ]),
+											  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followers clicked from Profil page yess');
+											     
+											      m.route.set("/followers")
+											  }}, [
+												  m('strong',{class:''},"400k "), //TO DO : nb de followers
+											  ], " abonnés"),
+										  ]),
+										  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followings clicked from Profil page');
+											     
+											      m.route.set("/followings")
+											  }}, [
+												  m('strong',{class:''},"900 "), //TO DO : nb de followings
+											  ], " abonnements"),
+										  ]),
+											  
+									   ]),  
+									      
+									   m("p", {class: 'is-4'},[ 
+										   m('strong',{class:''},""+Profile.email.split("@",1)),
+										]), 
+									   m('p',{class:''}, Profile.bio),
+							   		]),
+							    ]),
+							]),  
+				      ]),  
+				      
+				 	  m("div",{class:'box'},m(ShowFollowers,{profile: Followers})),
+				 ]),
+				 m('div',{class:'column is-2'},""),
+			  ]),  
+			])
+		  },
+		  		 		  
+		  loadFollowers: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users"+'?access_token=' + encodeURIComponent(Profile.ID)
+		          })
+		      .then(function(result) {
+		      	console.log("load followers:",result)
+		      	Followers.followers=result.items
+		          if ('nextPageToken' in result) {
+		        	  Followers.nextToken= result.nextPageToken
+		          } else {
+		        	  Followers.nextToken=""
+		          }})
+		  },
+		  nextFollowers: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users",
+		          params: {
+		        	  'next':Followers.nextToken,
+		        	  'access_token': encodeURIComponent(Profile.ID)
+		          }
+		       })
+		      .then(function(result) {
+		      	console.log("next followers:",result)
+		      	result.items.map(function(item){Followers.followers.push(item)})
+		          if ('nextPageToken' in result) {
+		        	  Followers.nextToken= result.nextPageToken
+		          } else {
+		        	  Followers.nextToken=""
+		          }})
+		  }
 }
 //------------------------------------------------------------------------------------------------------//
 
 //---------------------------------------------------Page des followings---------------------------------------------------//  
-var FollowingsView =	{
+var FollowingsView  = {
+		view: function() {
+			return m('div', {class:'container'}, [
+				m('div', m(Followings)),
+		    ])
+		}
 		
+}
+var ShowFollowings =	{
+		
+		
+		oninit: function(vnode) { 
+			
+			vnode.attrs.profile.loadFollowings()      
+	        console.log("Followings initialized")
+	     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.followings.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": item.properties.profilUrl}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'title is-4'}, item.properties.name),
+										  m("p", {class: 'is-4'},[
+											  m('strong',{class:''},""+item.properties.pseudo), 
+										  ]), 
+										  
+										  m('p',{class:''}, item.properties.bio),										  
+								   	  ]),
+								   	  
+								   	 m('div',{class: 'media-right'},[
+										  m("button", {class: 'button is-danger'}, "Se Désabonner") // TO DO : à completer pour le unfollow									  
+								   	  ]),
+								   	  
+								   ]),
+								]),  					      
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.nextFollowings()}
+		 },
+	   "Next "),
+     ])
+  }		              
+	    	  
+}
+
+var Followings = {
+		  
+		  nextToken:"",
+		  followings:[], //abonnés
+		  oncreate: function() {
+		     console.log("Followings created")
+		  },
+		  view: function(){
+			return m('div', {class:'container'}, [
+				m('div',{class: 'columns ',},[
+					m('div',{class:'column is-2'},""),
+					m('div', {class:'column is-8 has-text-centered'}, [
+						m('div', {class:'level'}, [
+							 m("h1", {class: 'level-left '}, [
+								
+								 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+								      console.log('Homepage clicked from Profil page');
+								      m.route.set("/secret")
+							 		}},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-home'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted is-active',onclick : function (){
+									    
+									      console.log('Profil link is clicked.');
+									   
+									      m.route.set("/profile")
+									    
+									 }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-user'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted',onclick : function () {
+								      console.log('Post clicked from Post page');
+								      m.route.set("/post")
+								  }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-camera'}),
+									  ]),
+								  ]),
+							  ]),
+							 m("button", {class: 'button level-right is-link',  onclick : function () {
+								    var auth2 = gapi.auth2.getAuthInstance();
+								    auth2.signOut().then(function () {
+								      console.log('User signed out.');
+								      m.route.set("/login")
+								    });
+							 }}, [
+								    m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-sign-out-alt'}),
+									  ]),
+									  m('strong', " Se Déconnecter"),
+								  ]),
+						]),
+					 
+					  
+					   m('div',{class: 'card'},[
+						   m('div',{class: 'card-header is-light'},[
+		      					m('div',{class: 'card-header-title is-centered '}, "Abonnements")
+		      				]),
+						    m('div',{class: 'card-content'},[
+							   m('div',{class: 'media'},[
+								  m('div',{class: 'media-left'},[
+									  m('figure',{class: 'image is-128x128'},[
+										  m("img",{class: 'is-rounded',"src":Profile.url}),	
+									  ]),
+								  ]),
+								  m('div',{class: 'media-content'},[
+									  m("p", {class: 'title is-4'}, Profile.name),
+									  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
+									  m('nav',{class: 'level-left'},[
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Posts clicked from Profil page');
+											     
+											      m.route.set("/profile")
+											  }}, [
+												  m('strong',{class:''}, Profile.list.length), //TO DO : nb de posts
+											  ], " publications"),
+										  ]),
+											  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followers clicked from Profil page yess');
+											     
+											      m.route.set("/followers")
+											  }}, [
+												  m('strong',{class:''},"400k "), //TO DO : nb de followers
+											  ], " abonnés"),
+										  ]),
+										  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followings clicked from Profil page');
+											     
+											      m.route.set("/followings")
+											  }}, [
+												  m('strong',{class:''},"900 "), //TO DO : nb de followings
+											  ], " abonnements"),
+										  ]),
+											  
+									   ]),  
+									      
+									   m("p", {class: 'is-4'},[ 
+										   m('strong',{class:''},""+Profile.email.split("@",1)),
+										]), 
+									   m('p',{class:''}, Profile.bio),
+							   		]),
+							    ]),
+							]),  
+				      ]),  
+				      
+				 	  m("div",{class:'box'},m(ShowFollowings,{profile: Followings})),
+				 ]),
+				 m('div',{class:'column is-2'},""),
+			  ]),  
+			])
+		  },
+		  		 		  
+		  loadFollowings: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users"+'?access_token=' + encodeURIComponent(Profile.ID)
+		          })
+		      .then(function(result) {
+		      	console.log("load followers:",result)
+		      	Followings.followings=result.items
+		          if ('nextPageToken' in result) {
+		        	  Followings.nextToken= result.nextPageToken
+		          } else {
+		        	  Followings.nextToken=""
+		          }})
+		  },
+		  nextFollowings: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users",
+		          params: {
+		        	  'next':Followings.nextToken,
+		        	  'access_token': encodeURIComponent(Profile.ID)
+		          }
+		       })
+		      .then(function(result) {
+		      	console.log("next followings:",result)
+		      	result.items.map(function(item){Followings.followings.push(item)})
+		          if ('nextPageToken' in result) {
+		        	  Followings.nextToken= result.nextPageToken
+		          } else {
+		        	  Followings.nextToken=""
+		          }})
+		  }
 }
 //---------------------------------------------------------------------------------------------------------//
 
@@ -659,20 +1108,23 @@ m.route(document.getElementById("vDom"), "/secret", {
   "/profile":{ onmatch: function() {
 			  	if (Profile.ID=="") {m.route.set("/login")}
 				else return ProfileView
-			}},
-	"/post":{ onmatch: function() {
-	  	if (HomePage.ID=="") {m.route.set("/login")}
-		else return Post
-	}},
-  //"/followers" : { onmatch: function() {
-    //			  	if (Profile.ID=="") {m.route.set("/login")}
-	//			else return Followers
-		//	}},
-//"/followings" : { onmatch: function() {
-   //			  	if (Profile.ID=="") {m.route.set("/login")}
-//			else return Followings
-		//}},
+			   }},
+   "/post":{ onmatch: function() {
+			  	if (HomePage.ID=="") {m.route.set("/login")}
+				else return Post
+	         }},
+  "/followers" : { onmatch: function() {
+   			  	if (Profile.ID=="") {m.route.set("/login")}
+				else return FollowersView
+			 }},
+   "/followings" : { onmatch: function() {
+   			  	if (Profile.ID=="") {m.route.set("/login")}
+			    else return FollowingsView
+		    }},
 })
+
+//----------------------------------Variables utilitaires----------------------------------------// 
+var ViewToShow = ShowPost; //Par defaut ce sont les posts du user qui sont affichés
 
 //----------------------------------------------------------------------------------------------------// 
 
