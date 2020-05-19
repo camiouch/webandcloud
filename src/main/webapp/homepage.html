@@ -76,7 +76,14 @@
                 </span>
               </a>
             </span>
-                        
+            <span class="navbar-item">
+              <a class="button is-info is-inverted" onclick = "m.route.set('/explore')">
+                <span class="icon">
+                  <i class="fab fa-searchengin"></i>
+                </span>
+              </a>
+            </span>
+              
           </div>
         </div>
         
@@ -130,7 +137,7 @@ var HomePage={
 						  
 						  m("a",{class: 'level-item is-inverted',onclick : function () {
 							      console.log('Profile clicked from Home page');
-							      ViewToShow = ShowPost;
+							      
 							      m.route.set("/profile")
 						 }},[
 							  m('span', {class:'icon'}, [
@@ -165,6 +172,7 @@ var HomePage={
 		 		  m('div',{class: 'card-header is-light'},[
     					m('div',{class: 'card-header-title is-centered '}, "Accueil")
     				]),
+    				m('hr'),
 		 		  m(ShowPost,{profile: HomePage})
 		 		  ]),
 		 ]),
@@ -175,7 +183,7 @@ var HomePage={
   loadList: function() {
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(HomePage.ID)
+          url: "_ah/api/myApi/v1/posts/user/timeline"+'?access_token=' + encodeURIComponent(HomePage.ID)
           })
       .then(function(result) {
       	console.log("load_list:",result)
@@ -189,7 +197,7 @@ var HomePage={
   next: function() {
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/collectionresponse_entity",
+          url: "_ah/api/myApi/v1/posts/user/timeline",
           params: {
         	  'next':HomePage.nextToken,
         	  'access_token': encodeURIComponent(HomePage.ID)
@@ -211,7 +219,7 @@ var HomePage={
 		   	console.log("post:"+data)
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/userManager"+'?access_token='+encodeURIComponent(HomePage.ID),
+          url: "_ah/api/myApi/v1/users/userManager"+'?access_token='+encodeURIComponent(HomePage.ID),
           params: data,
           })
       .then(function(result) {
@@ -229,7 +237,21 @@ var ShowPost = {
 	        vnode.attrs.profile.loadList()     
 	    },
 	    view: function(vnode) {
-		    	return m('div', [ 
+	    	var heart_icon_class = [];
+			
+	    	//Pour precharger la bonne couleur de 'icone du lien du Like
+	    	vnode.attrs.profile.list.map(function(item) {
+				 if(item.properties.likes){
+					 if (item.properties.likes.includes(Profile.email)) {
+						 heart_icon_class[item.key.name] = 'fas fa-heart';
+					 } else {
+						 heart_icon_class[item.key.name]= 'far fa-heart';
+					 }
+				 }else{
+					 heart_icon_class[item.key.name] = 'far fa-heart';
+				 }
+			 });
+	    	return m('div', [ 
 		   		  vnode.attrs.profile.list.map(function(item) {
 				      return m('div',{class: ''},[ 
 			      			m('div',{class: 'card'},[
@@ -256,9 +278,12 @@ var ShowPost = {
 								m('div',{class: 'card-content'},[
 									m('nav',{class: 'level is-mobile'},[
 									  m("div",{class: 'level-left'},[
-										  m('a',{class:' level-item', href:"#"}, [
+										  m('a',{class:'level-item icon-block' }, [
 											  m('span',{class:'icon is-small'}, [
-												  m('i',{class:'far fa-heart'}),
+												  m('i',{ class: heart_icon_class[item.key.name], 
+													  style: 'color: #4072e6', id: item.key.name,
+													  onclick: function() {setupLikes(item.key.name)}, 
+													  }),
 											  ]),
 										  ]),
 									  ]), 	  
@@ -415,7 +440,7 @@ var Post = {
 		   	console.log("post:"+data)
 			return m.request({
 		   		method: "POST",
-		   		url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(HomePage.ID),
+		   		url: "_ah/api/myApi/v1/posts/new"+'?access_token='+encodeURIComponent(HomePage.ID),
 		       	params: data,
 		   	})
 		    	.then(function(result) {
@@ -442,13 +467,29 @@ var Profile={
   ID:"",
   url:"",
   bio:"",
+  nbFollowers : 0,
+  nbFollowings : 0,
   nextToken:"",
   list:[], //liste de ses posts
   
   oncreate: function() {
      console.log("Profile created")
-     console.log("ViewToShow :",ViewToShow)
+    
   },
+  oninit: function() {
+	  
+	     setTimeout(() => {
+	    	 Followers.loadFollowers;
+          }, 100);
+	     
+	     setTimeout(() => {
+	    	 Followings.loadFollowings;
+          }, 200);
+	     
+	     Profile.nbFollowers = Followers.followers.length
+	     Profile.nbFollowings = Followings.followings.length
+	    
+	  },
   view: function(){
 	return m('div', {class:'container'}, [
 		m('div',{class: 'columns ',},[
@@ -458,7 +499,7 @@ var Profile={
 					 m("h1", {class: 'level-left '}, [
 						
 						 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
-						      console.log('Homepage clicked from Profil page');
+						      console.log('Homepage clic');
 						      m.route.set("/secret")
 					 		}},[
 							  m('span', {class:'icon'}, [
@@ -533,7 +574,7 @@ var Profile={
 									     
 									      m.route.set("/followers")
 									  }}, [
-										  m('strong',{class:''},"100k "), //TO DO : nb de followers
+										  m('strong',{class:''}, Profile.nbFollowers), //TO DO : nb de followers
 									  ], " abonnés"),
 								  ]),
 								  
@@ -543,7 +584,7 @@ var Profile={
 									      
 									      m.route.set("/followings")
 									  }}, [
-										  m('strong',{class:''},"300 "), //TO DO : nb de followings
+										  m('strong',{class:''}, Profile.nbFollowings), //TO DO : nb de followings
 									  ], " abonnements"),
 								  ]),
 									  
@@ -567,7 +608,7 @@ var Profile={
   loadList: function() {
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(Profile.ID)
+          url: "_ah/api/myApi/v1/posts/owner"+'?access_token=' + encodeURIComponent(Profile.ID)
           })
       .then(function(result) {
       	console.log("load_list profile:",result)
@@ -581,7 +622,7 @@ var Profile={
   next: function() {
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/collectionresponse_entity",
+          url: "_ah/api/myApi/v1/posts/owner",
           params: {
         	  'next':Profile.nextToken,
         	  'access_token': encodeURIComponent(Profile.ID)
@@ -603,7 +644,7 @@ var Profile={
 		   	console.log("post:"+data)
       return m.request({
           method: "GET",
-          url: "_ah/api/myApi/v1/userManager"+'?access_token='+encodeURIComponent(Profile.ID),
+          url: "_ah/api/myApi/v1/users/userManager"+'?access_token='+encodeURIComponent(Profile.ID),
           params: data,
           })
       .then(function(result) {
@@ -657,7 +698,10 @@ var ShowFollowers =	{
 								   	  ]),
 								   	  
 								   	 m('div',{class: 'media-right'},[
-										  m("button", {class: 'button is-primary'}, "S'abonner") // TO DO : pour follow										  
+										  m("button", {class: 'button is-primary', id: item.key.name,
+											  onclick: function() { followClickListner(item.key.name) }
+											}, "S'abonner") // TO DO : pour follow										  
+											  
 								   	  ]),
 								   	  
 								   ]),
@@ -768,7 +812,7 @@ var Followers = {
 											     
 											      m.route.set("/followers")
 											  }}, [
-												  m('strong',{class:''},"400k "), //TO DO : nb de followers
+												  m('strong',{class:''},Followers.followers.length), //TO DO : nb de followers
 											  ], " abonnés"),
 										  ]),
 										  
@@ -778,7 +822,7 @@ var Followers = {
 											     
 											      m.route.set("/followings")
 											  }}, [
-												  m('strong',{class:''},"900 "), //TO DO : nb de followings
+												  m('strong',{class:''},Followings.followings.length), //TO DO : nb de followings
 											  ], " abonnements"),
 										  ]),
 											  
@@ -803,7 +847,7 @@ var Followers = {
 		  loadFollowers: function() {
 		      return m.request({
 		          method: "GET",
-		          url: "_ah/api/myApi/v1/users"+'?access_token=' + encodeURIComponent(Profile.ID)
+		          url: "_ah/api/myApi/v1/users/followers"+'?access_token=' + encodeURIComponent(Profile.ID)
 		          })
 		      .then(function(result) {
 		      	console.log("load followers:",result)
@@ -817,7 +861,7 @@ var Followers = {
 		  nextFollowers: function() {
 		      return m.request({
 		          method: "GET",
-		          url: "_ah/api/myApi/v1/users",
+		          url: "_ah/api/myApi/v1/users/followers",
 		          params: {
 		        	  'next':Followers.nextToken,
 		        	  'access_token': encodeURIComponent(Profile.ID)
@@ -826,6 +870,7 @@ var Followers = {
 		      .then(function(result) {
 		      	console.log("next followers:",result)
 		      	result.items.map(function(item){Followers.followers.push(item)})
+		      	
 		          if ('nextPageToken' in result) {
 		        	  Followers.nextToken= result.nextPageToken
 		          } else {
@@ -875,7 +920,9 @@ var ShowFollowings =	{
 								   	  ]),
 								   	  
 								   	 m('div',{class: 'media-right'},[
-										  m("button", {class: 'button is-danger'}, "Se Désabonner") // TO DO : à completer pour le unfollow									  
+										  m("button", {class: 'button is-danger', id: item.key.name,
+											  onclick: function() { followClickListner(item.key.name) }
+											  }, "Se Désabonner") // TO DO : à completer pour le unfollow									  
 								   	  ]),
 								   	  
 								   ]),
@@ -986,7 +1033,7 @@ var Followings = {
 											     
 											      m.route.set("/followers")
 											  }}, [
-												  m('strong',{class:''},"400k "), //TO DO : nb de followers
+												  m('strong',{class:''}, Followers.followers.length), //TO DO : nb de followers
 											  ], " abonnés"),
 										  ]),
 										  
@@ -996,8 +1043,8 @@ var Followings = {
 											     
 											      m.route.set("/followings")
 											  }}, [
-												  m('strong',{class:''},"900 "), //TO DO : nb de followings
-											  ], " abonnements"),
+												  m('strong',{class:''},Followings.followings.length), //TO DO : nb de followings
+											  ], "abonnements"),
 										  ]),
 											  
 									   ]),  
@@ -1021,10 +1068,10 @@ var Followings = {
 		  loadFollowings: function() {
 		      return m.request({
 		          method: "GET",
-		          url: "_ah/api/myApi/v1/users"+'?access_token=' + encodeURIComponent(Profile.ID)
+		          url: "_ah/api/myApi/v1/users/followings"+'?access_token=' + encodeURIComponent(Profile.ID)
 		          })
 		      .then(function(result) {
-		      	console.log("load followers:",result)
+		      	console.log("load followings:",result)
 		      	Followings.followings=result.items
 		          if ('nextPageToken' in result) {
 		        	  Followings.nextToken= result.nextPageToken
@@ -1035,7 +1082,7 @@ var Followings = {
 		  nextFollowings: function() {
 		      return m.request({
 		          method: "GET",
-		          url: "_ah/api/myApi/v1/users",
+		          url: "_ah/api/myApi/v1/users/followings",
 		          params: {
 		        	  'next':Followings.nextToken,
 		        	  'access_token': encodeURIComponent(Profile.ID)
@@ -1052,7 +1099,225 @@ var Followings = {
 		  }
 }
 //---------------------------------------------------------------------------------------------------------//
+//---------------------------------------------------Page de l'exploration---------------------------------------------------//  
+var ExploreView  = {
+		view: function() {
+			return m('div', {class:'container'}, [
+				m('div', m(Explore)),
+		    ])
+		}
+		
+}
+var ShowExplore =	{
+		
+		
+		oninit: function(vnode) { 
+			
+			vnode.attrs.profile.loadExplore()      
+	        console.log("Explore initialized")
+	     
+	    },
+	    view: function(vnode) {
+		    	return m('div', [ 
+		   		  vnode.attrs.profile.exploreList.map(function(item) {
+				      return m('div',{class: ''},[ 
+			      			m('div',{class: 'card'},[
+						    	m('div',{class: 'card-content'},[
+								   m('div',{class: 'media'},[
+									  m('div',{class: 'media-left'},[
+										  m('figure',{class: 'image is-48x48'},[
+											  m("img",{class: 'is-rounded',"src": item.properties.profilUrl}),	
+										  ]),
+									  ]),
+									  m('div',{class: 'media-content'},[
+										  m("p", {class: 'title is-4'}, item.properties.name),
+										  m("p", {class: 'is-4'},[
+											  m('strong',{class:''},""+item.properties.pseudo), 
+										  ]), 
+										  
+										  m('p',{class:''}, item.properties.bio),										  
+								   	  ]),
+								   	  
+								   	 m('div',{class: 'media-right'},[
+										  m("button", {class: 'button is-primary', id: item.key.name,
+											  onclick: function() { followClickListner(item.key.name) }
+											  }, "S'abonner") // TO DO : à completer pour le follow									  
+								   	  ]),
+								   	  
+								   ]),
+								]),  					      
+						  	  
+						    ]),
+						    m('hr')
+		])				    
+	  }),
+	    m('button',{
+		      class: 'button is-link',
+		      onclick: function(e) {vnode.attrs.profile.nextExplore()}
+		 },
+	   "Next "),
+     ])
+  }		              
+	    	  
+}
 
+var Explore = {
+		  
+		  nextToken:"",
+		  exploreList:[], //abonnés
+		  oncreate: function() {
+		     console.log("Explore created")
+		  },
+		  view: function(){
+			return m('div', {class:'container'}, [
+				m('div',{class: 'columns ',},[
+					m('div',{class:'column is-2'},""),
+					m('div', {class:'column is-8 has-text-centered'}, [
+						m('div', {class:'level'}, [
+							 m("h1", {class: 'level-left '}, [
+								
+								 m("a",{class: 'level-item is-inverted is-active', onclick : function () {
+								      console.log('Homepage clicked from Profil page');
+								      m.route.set("/secret")
+							 		}},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-home'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted is-active',onclick : function (){
+									    
+									      console.log('Profil link is clicked.');
+									   
+									      m.route.set("/profile")
+									    
+									 }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-user'}),
+									  ]),
+								  ]),
+								  
+								  m("a",{class: 'level-item is-inverted',onclick : function () {
+								      console.log('Post clicked from Post page');
+								      m.route.set("/post")
+								  }},[
+									  m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-camera'}),
+									  ]),
+								  ]),
+							  ]),
+							 m("button", {class: 'button level-right is-link',  onclick : function () {
+								    var auth2 = gapi.auth2.getAuthInstance();
+								    auth2.signOut().then(function () {
+								      console.log('User signed out.');
+								      m.route.set("/login")
+								    });
+							 }}, [
+								    m('span', {class:'icon'}, [
+										  m('i',{class:'fas fa-sign-out-alt'}),
+									  ]),
+									  m('strong', " Se Déconnecter"),
+								  ]),
+						]),
+					 
+					  
+					   m('div',{class: 'card'},[
+						   m('div',{class: 'card-header is-light'},[
+		      					m('div',{class: 'card-header-title is-centered '}, "Explorer")
+		      				]),
+						    m('div',{class: 'card-content'},[
+							   m('div',{class: 'media'},[
+								  m('div',{class: 'media-left'},[
+									  m('figure',{class: 'image is-128x128'},[
+										  m("img",{class: 'is-rounded',"src":Profile.url}),	
+									  ]),
+								  ]),
+								  m('div',{class: 'media-content'},[
+									  m("p", {class: 'title is-4'}, Profile.name),
+									  m("p", {class: 'subtitle is-6'}, "@"+Profile.email.split("@",1)),
+									  m('nav',{class: 'level-left'},[
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Posts clicked from Profil page');
+											     
+											      m.route.set("/profile")
+											  }}, [
+												  m('strong',{class:''}, Profile.list.length), //TO DO : nb de posts
+											  ], " publications"),
+										  ]),
+											  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followers clicked from Profil page yess');
+											     
+											      m.route.set("/followers")
+											  }}, [
+												  m('strong',{class:''}, Profile.nbFollowers), //TO DO : nb de followers
+											  ], " abonnés"),
+										  ]),
+										  
+										  m("p",{class: 'level-item'},[
+											  m('a',{class:' is-link', onclick : function () {
+											      console.log('Followings clicked from Profil page');
+											     
+											      m.route.set("/followings")
+											  }}, [
+												  m('strong',{class:''}, Profile.nbFollowers), //TO DO : nb de followings
+											  ], "abonnements"),
+										  ]),
+											  
+									   ]),  
+									      
+									   m("p", {class: 'is-4'},[ 
+										   m('strong',{class:''},""+Profile.email.split("@",1)),
+										]), 
+									   m('p',{class:''}, Profile.bio),
+							   		]),
+							    ]),
+							]),  
+				      ]),  
+				      
+				 	  m("div",{class:'box'},m(ShowExplore,{profile: Explore})),
+				 ]),
+				 m('div',{class:'column is-2'},""),
+			  ]),  
+			])
+		  },
+		  		 		  
+		  loadExplore: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users/explore"+'?access_token=' + encodeURIComponent(Profile.ID)
+		          })
+		      .then(function(result) {
+		      	console.log("load Explore:",result)
+		      	Explore.exploreList=result.items
+		          if ('nextPageToken' in result) {
+		        	  Explore.nextToken= result.nextPageToken
+		          } else {
+		        	  Explore.nextToken=""
+		          }})
+		  },
+		  nextFollowings: function() {
+		      return m.request({
+		          method: "GET",
+		          url: "_ah/api/myApi/v1/users/explore",
+		          params: {
+		        	  'next':Explore.nextToken,
+		        	  'access_token': encodeURIComponent(Profile.ID)
+		          }
+		       })
+		      .then(function(result) {
+		      	console.log("next followings:",result)
+		      	result.items.map(function(item){Explore.exploreList.push(item)})
+		          if ('nextPageToken' in result) {
+		        	  FollowExploreings.nextToken= result.nextPageToken
+		          } else {
+		        	  Explore.nextToken=""
+		          }})
+		  }
+}
+//---------------------------------------------------------------------------------------------------------//
 //----------------------fonction de google login---------------------------------------------------//
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
@@ -1121,10 +1386,123 @@ m.route(document.getElementById("vDom"), "/secret", {
    			  	if (Profile.ID=="") {m.route.set("/login")}
 			    else return FollowingsView
 		    }},
+    "/explore" : { onmatch: function() {
+ 			  	if (Profile.ID=="") {m.route.set("/login")}
+	    else return ExploreView
+    }},
 })
 
-//----------------------------------Variables utilitaires----------------------------------------// 
-var ViewToShow = ShowPost; //Par defaut ce sont les posts du user qui sont affichés
+
+
+
+//----------------------------------Fonctions utilitaires----------------------------------------// 
+
+function setupLikes(id) {
+	
+	if (document.getElementById(id) != null) {
+		var elem = document.getElementById(id); 
+		if (elem.classList.contains('far') && elem.classList.contains('fa-heart')) {
+			elem.classList.add("fas");
+			elem.classList.remove("far");
+			elem.style.color = "#ff0000";
+			
+			var data = {'ID': id}
+ 	    	     		
+			m.request({
+         		method: "PUT",
+         		url: "_ah/api/myApi/v1/posts/like"+'?access_token='+encodeURIComponent(HomePage.ID),
+                params: data,
+         	}).then(function(result) {
+         		
+         		console.log('like setup elem : ', elem);
+         	 });
+			
+		} else {
+			elem.classList.add("far");
+			elem.classList.remove("fas");
+			elem.style.color = "#4072e6";
+			
+			var data = {'ID': id}
+ 	    	     		
+			m.request({
+         		method: "PUT",
+         		url: "_ah/api/myApi/v1/put/posts/unlike/"+'?access_token='+encodeURIComponent(HomePage.ID),
+                params: data,
+         	}).then(function(result) {
+     	 			console.log('unlike setup elem : ', elem);
+         	 });
+		}
+	} else {
+		//setTimeout(setupLikes(id), 800);
+		console.log('Like setup else id : ', id);
+	}
+	
+}
+
+function setupFollow(id) {
+	
+	if (document.getElementById(id) != null) {
+		    var elem = document.getElementById(id);			
+			var data = {"email": id}
+ 	    	     		
+			m.request({
+         		method: "PUT",
+         		url: "_ah/api/myApi/v1/users/follow"+'?access_token='+encodeURIComponent(HomePage.ID),
+                params: data,
+         	}).then(function(result) {
+         		console.log('follow setup res : ', result);
+         		elem.classList.add("is-danger");
+         		elem.classList.remove("is-primary");
+         		elem.innerHTML = "Se Désabonner";
+         	 });
+		
+	} else {
+		//setTimeout(setupFollow(id), 800);
+		console.log('follow setup else id : ', id);
+	} 
+	
+}
+
+
+function setupUnfollow(id) {
+	
+	if (document.getElementById(id) != null) {
+		    var elem = document.getElementById(id);					
+			var data = {'email': id}
+ 	    	     		
+			m.request({
+         		method: "PUT",
+         		url: "_ah/api/myApi/v1/users/unfollow"+'?access_token='+encodeURIComponent(HomePage.ID),
+                params: data,
+         	}).then(function(result) {
+         		console.log('unfollow setup res : ', result);
+         		elem.classList.remove("is-danger");
+         		elem.classList.add("is-primary");
+         		elem.innerHTML = "S'abonner";
+         	 });
+		
+	} else {
+		//setTimeout(setupUnfollow(id), 800);
+		console.log('unfollow setup else id : ', id);
+	} 
+	
+}
+
+function followClickListner(id) {
+	if (document.getElementById(id) != null) {
+		
+		var elem = document.getElementById(id);
+	    	     			
+   		console.log('followClickListner call : ', elem);
+   		
+   		  if(elem.innerHTML=="S'abonner") {
+   			  setupFollow(id);
+   		  }else{
+   			  setupUnfollow(id);
+   		  }
+   		}
+     	
+	}
 
 //----------------------------------------------------------------------------------------------------// 
 
