@@ -117,6 +117,16 @@ var HomePage={
   list:[],
   oncreate: function() {
      console.log("HomePage created")
+     setTimeout(() => {
+     	 Followers.loadFollowers();
+       }, 10);
+      
+      setTimeout(() => {
+     	 Followings.loadFollowings();
+       }, 10);
+      
+      Profile.nbFollowers = Followers.followers.length
+      Profile.nbFollowings = Followings.followings.length
   },
   view: function(){
 	return m('div', {class:'container'}, [
@@ -265,7 +275,11 @@ var ShowPost = {
 									  m('div',{class: 'media-content'},[
 										  m("p", {class: 'subtitle is-6'},[
 											  m('strong',{class:''},""+item.properties.owner.split("@",1)), 
-										  ]),     
+										  ]), 
+										  m('p',{class:'is-7'  }, [
+											  m("span", {class: '', style :"color : #4072e6"},
+												"Publié le : "+new Date(item.properties.date).toLocaleString("fr-FR")) // TO DO : pour Liker	
+										  ]),
 								   	  ]),
 								   ]),
 								]),  
@@ -278,13 +292,15 @@ var ShowPost = {
 								m('div',{class: 'card-content'},[
 									m('nav',{class: 'level is-mobile'},[
 									  m("div",{class: 'level-left'},[
-										  m('a',{class:'level-item icon-block' }, [
-											  m('span',{class:'icon is-small'}, [
-												  m('i',{ class: heart_icon_class[item.key.name], 
-													  style: 'color: #4072e6', id: item.key.name,
-													  onclick: function() {setupLikes(item.key.name)}, 
-													  }),
-											  ]),
+										  m('div',{class:'level-item '  }, [
+											  m("button", {class: 'button is-primary', id: item.key.name,
+												  onclick: function() { likeClickListner(item.key.name) }
+												}, "Liker") // TO DO : pour Liker	
+										  ]),
+										  m('div',{class:'level-item '  }, [
+											  m("button", {class: 'button is-danger', id: item.key.name+"sup",
+												  onclick: function() { deletePost(item.key.name) }
+												}, "Supprimer") // TO DO : pour supprimer	
 										  ]),
 									  ]), 	  
 								  ]),  				 	 
@@ -299,7 +315,7 @@ var ShowPost = {
 												  m('span',{class:'icon is-small'}, [
 													  m('i',{class:'fas fa-heart'}), 
 												  ]),
-												  m('strong', item.properties.likec+" Likes"),
+												  m('strong',{id: item.key.name+"like"}, item.properties.likec+" Likes"),
 											  ]),
 										  ]), 	  
 									  ]),  
@@ -467,8 +483,8 @@ var Profile={
   ID:"",
   url:"",
   bio:"",
-  nbFollowers : 0,
-  nbFollowings : 0,
+  nbFollowers : "",
+  nbFollowings : "",
   nextToken:"",
   list:[], //liste de ses posts
   
@@ -480,11 +496,11 @@ var Profile={
 	  
 	     setTimeout(() => {
 	    	 Followers.loadFollowers;
-          }, 100);
+          }, 10);
 	     
 	     setTimeout(() => {
 	    	 Followings.loadFollowings;
-          }, 200);
+          }, 10);
 	     
 	     Profile.nbFollowers = Followers.followers.length
 	     Profile.nbFollowings = Followings.followings.length
@@ -683,23 +699,20 @@ var ShowFollowers =	{
 			      				
 						    	m('div',{class: 'card-content'},[
 								   m('div',{class: 'media'},[
-									  m('div',{class: 'media-left'},[
-										  m('figure',{class: 'image is-48x48'},[
-											  m("img",{class: 'is-rounded',"src": item.properties.profilUrl}),	
-										  ]),
-									  ]),
+			
 									  m('div',{class: 'media-content'},[
-										  m("p", {class: 'title is-4'}, item.properties.name),
-										  m("p", {class: 'is-4'},[
-											  m('strong',{class:''},""+item.properties.pseudo), 
+										  m("p", {class: 'title is-4'}, item.split("@",1)),
+										 
+										  m("p", {class: 'subtitle is-4'},[
+											  m('span',{class:''},""+item), 
 										  ]), 
 										  
-										  m('p',{class:''}, item.properties.bio),										  
+										  m('p',{class:''}, " Vous suit"),										  
 								   	  ]),
 								   	  
 								   	 m('div',{class: 'media-right'},[
-										  m("button", {class: 'button is-primary', id: item.key.name,
-											  onclick: function() { followClickListner(item.key.name) }
+										  m("button", {class: 'button is-primary', id: item,
+											  onclick: function() { followClickListner(item) }
 											}, "S'abonner") // TO DO : pour follow										  
 											  
 								   	  ]),
@@ -905,23 +918,19 @@ var ShowFollowings =	{
 			      			m('div',{class: 'card'},[
 						    	m('div',{class: 'card-content'},[
 								   m('div',{class: 'media'},[
-									  m('div',{class: 'media-left'},[
-										  m('figure',{class: 'image is-48x48'},[
-											  m("img",{class: 'is-rounded',"src": item.properties.profilUrl}),	
-										  ]),
-									  ]),
-									  m('div',{class: 'media-content'},[
-										  m("p", {class: 'title is-4'}, item.properties.name),
-										  m("p", {class: 'is-4'},[
-											  m('strong',{class:''},""+item.properties.pseudo), 
-										  ]), 
-										  
-										  m('p',{class:''}, item.properties.bio),										  
-								   	  ]),
+									   m('div',{class: 'media-content'},[
+											  m("p", {class: 'title is-4'}, item.split("@",1)),
+											 
+											  m("p", {class: 'subtitle is-4'},[
+												  m('span',{class:''},""+item), 
+											  ]), 
+											  
+											  m('p',{class:''}, " Vous suivez"),										  
+									   	  ]),
 								   	  
 								   	 m('div',{class: 'media-right'},[
-										  m("button", {class: 'button is-danger', id: item.key.name,
-											  onclick: function() { followClickListner(item.key.name) }
+										  m("button", {class: 'button is-danger', id: item,
+											  onclick: function() { followClickListner(item) }
 											  }, "Se Désabonner") // TO DO : à completer pour le unfollow									  
 								   	  ]),
 								   	  
@@ -1331,6 +1340,8 @@ function onSignIn(googleUser) {
   Profile.ID=googleUser.getAuthResponse().id_token;
   Profile.url=profile.getImageUrl();
   
+ 
+  
   m.route.set("/secret")
 }
 //-----------------------------------------------------------------------------------------------------------------------//
@@ -1345,7 +1356,7 @@ var Login = {
 		 		m('div',{class: 'columns ',},[		 					 
 					  m('div',{class:'column is-one-quarter'},""),
 					  m('article',{class: ' panel is-link column is-4 has-text-centered'},[	
-						     m('p',{class:'panel-heading'},"Bienvnue sur TinyGram"),
+						     m('p',{class:'panel-heading'},"Bienvenue sur TinyGram"),
 						     m('p',{class:'subtitle is-light'},"Connectez-vous avec votre compte Google"),	 
 						 	 m('div',{class: 'columns '},[
 						 		  m('div',{class:'column is-one-quarter'},""),
@@ -1367,12 +1378,18 @@ var Login = {
 m.route(document.getElementById("vDom"), "/secret", {
   "/secret": { onmatch: function() {
             	if (HomePage.ID=="") {m.route.set("/login")}
-            	else return HomePageWiew
+            	else {
+            		viewToDisplay = "Home"
+            		return HomePageWiew
+            	}
         		}},
   "/login": Login,
   "/profile":{ onmatch: function() {
 			  	if (Profile.ID=="") {m.route.set("/login")}
-				else return ProfileView
+				else {
+					viewToDisplay = "Profile"
+					return ProfileView
+				}
 			   }},
    "/post":{ onmatch: function() {
 			  	if (HomePage.ID=="") {m.route.set("/login")}
@@ -1397,41 +1414,25 @@ m.route(document.getElementById("vDom"), "/secret", {
 
 //----------------------------------Fonctions utilitaires----------------------------------------// 
 
+//--------------------------like/unlike-------------------------------------------//
 function setupLikes(id) {
 	
 	if (document.getElementById(id) != null) {
-		var elem = document.getElementById(id); 
-		if (elem.classList.contains('far') && elem.classList.contains('fa-heart')) {
-			elem.classList.add("fas");
-			elem.classList.remove("far");
-			elem.style.color = "#ff0000";
-			
-			var data = {'ID': id}
- 	    	     		
-			m.request({
-         		method: "PUT",
-         		url: "_ah/api/myApi/v1/posts/like"+'?access_token='+encodeURIComponent(HomePage.ID),
-                params: data,
-         	}).then(function(result) {
-         		
-         		console.log('like setup elem : ', elem);
-         	 });
-			
-		} else {
-			elem.classList.add("far");
-			elem.classList.remove("fas");
-			elem.style.color = "#4072e6";
-			
-			var data = {'ID': id}
- 	    	     		
-			m.request({
-         		method: "PUT",
-         		url: "_ah/api/myApi/v1/put/posts/unlike/"+'?access_token='+encodeURIComponent(HomePage.ID),
-                params: data,
-         	}).then(function(result) {
-     	 			console.log('unlike setup elem : ', elem);
-         	 });
-		}
+		var elem = document.getElementById(id); 			
+		var data = {'ID': id}	    	     		
+		m.request({
+	       		method: "PUT",
+	       		url: "_ah/api/myApi/v1/posts/like"+'?access_token='+encodeURIComponent(HomePage.ID),
+	              params: data,
+	       	}).then(function(result) {
+	       		console.log('like setup res : ', result);
+	       		document.getElementById(id+"like").innerHTML = result.properties.likec+" Likes"      		
+	       		elem.classList.add("is-danger");
+	       		elem.classList.remove("is-primary");
+	       		elem.innerHTML = "Unliker";
+	
+	       	 });
+		
 	} else {
 		//setTimeout(setupLikes(id), 800);
 		console.log('Like setup else id : ', id);
@@ -1439,6 +1440,57 @@ function setupLikes(id) {
 	
 }
 
+function setupUnlikes(id) {
+	
+	if (document.getElementById(id) != null) {
+		var elem = document.getElementById(id); 			
+		var data = {'ID': id}	    	     		
+		m.request({
+	       		method: "PUT",
+	       		url: "_ah/api/myApi/v1/posts/unlike"+'?access_token='+encodeURIComponent(HomePage.ID),
+	              params: data,
+	       	}).then(function(result) {
+	       		
+	       		console.log('unike setup res : ', result);
+	       		elem.classList.add("is-primary");
+	       		elem.classList.remove("is-danger");
+	       		elem.innerHTML = "Liker";
+	       		var res = result
+	       		document.getElementById(id+"like").innerHTML = result.properties.likec+" Likes"
+	       		/* if(viewToDisplay=="Home") {
+	       			m.route.set("/secret")
+	       			console.log('home redirect : ', viewToDisplay);
+	       		}else {
+	       			console.log('profile : ', viewToDisplay);
+	       			m.route.set("/profile")
+	       		} */
+	       		
+	       	 });
+		
+	} else {
+		//setTimeout(setupLikes(id), 800);
+		console.log('Unlike setup else id : ', id);
+	}
+	
+}
+function likeClickListner(id) {
+	if (document.getElementById(id) != null) {
+		
+		var elem = document.getElementById(id);
+	    	     			
+   		console.log('likeClickListner call : ', elem);
+   		
+   		  if(elem.innerHTML=="Liker") {
+   			  setupLikes(id);
+   		  }else{
+   			  setupUnlikes(id);
+   		  }
+   		}
+     	
+	}
+//Paramètre pour différencier home et profile pour l'affichage des postes
+var viewToDisplay ="";
+//--------------------------follow/unfollow-------------------------------------------//
 function setupFollow(id) {
 	
 	if (document.getElementById(id) != null) {
@@ -1504,6 +1556,27 @@ function followClickListner(id) {
      	
 	}
 
+function deletePost(id) {
+	
+	if (document.getElementById(id) != null) {
+		    var elem = document.getElementById(id);					
+			var data = {'ID': id}
+ 	    	     		
+			m.request({
+         		method: "DELETE",
+         		url: "_ah/api/myApi/v1/posts/delete"+'?access_token='+encodeURIComponent(HomePage.ID),
+                params: data,
+         	}).then(function(result) {
+         		console.log('delete setup res : ', result);
+         		m.route.set("/profile")
+         	 });
+		
+	} else {
+		//setTimeout(setupUnfollow(id), 800);
+		console.log('delete setup else id : ', id);
+	} 
+	
+}
 //----------------------------------------------------------------------------------------------------// 
 
 		

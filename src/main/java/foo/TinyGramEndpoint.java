@@ -71,7 +71,7 @@ public class TinyGramEndpoint {
 			String[] parts = user.getEmail().split("@");
 			String part1 = parts[0];
 			e.setProperty("pseudo", "@" + part1);
-			e.setProperty("bio", "I'm a human being");
+			e.setProperty("bio", "I'm a human, funny with cool attitude. Follow me");
 			e.setProperty("profilUrl", up.getProfilUrl());
 
 			List<String> followings = new ArrayList<String>();
@@ -588,7 +588,7 @@ public class TinyGramEndpoint {
 
 		Key postKey = KeyFactory.createKey("TGPost", pm.getID());
 		Entity post = datastore.get(postKey);
-
+        
 		Transaction txn = datastore.beginTransaction();
 
 		try {
@@ -617,9 +617,33 @@ public class TinyGramEndpoint {
 
 	}
 
-	//helper for comparing two strings java 8
-	public static boolean stringCheckWithJava8(String test1, String test2) {
-		return Optional.ofNullable(test1).map(s1 -> s1.equals(test2)).orElseGet(() -> false).booleanValue();
-	}
+	// ---------------------------------------------------------------------------------------------------------------------//	
+	@ApiMethod(name = "deletePost", path = "posts/delete", httpMethod = HttpMethod.DELETE)
+	public Entity deletePost(User user, PostMessage pm) throws UnauthorizedException, EntityNotFoundException {
 
+		if (user == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+		Key postKey = KeyFactory.createKey("TGPost", pm.getID());
+		Entity post = datastore.get(postKey);
+		
+		Transaction txn = datastore.beginTransaction();
+
+		try {
+			datastore.delete(postKey);
+			txn.commit();
+
+		} finally {
+			if (txn.isActive()) {
+				txn.rollback();
+				
+			}
+		}
+
+		return post;
+
+	}
 }
