@@ -1559,7 +1559,9 @@ function followClickListner(id) {
 function deletePost(id) {
 	
 	if (document.getElementById(id) != null) {
-		    var elem = document.getElementById(id);					
+		 var elem = document.getElementById(id);	
+	   if(viewToDisplay=="Profile") {
+		   				
 			var data = {'ID': id}
  	    	     		
 			m.request({
@@ -1568,8 +1570,12 @@ function deletePost(id) {
                 params: data,
          	}).then(function(result) {
          		console.log('delete setup res : ', result);
+         		elem.style.visibility = "visible";
          		m.route.set("/profile")
          	 });
+	   }else {
+		   elem.style.visibility = "hidden";
+	   }
 		
 	} else {
 		//setTimeout(setupUnfollow(id), 800);

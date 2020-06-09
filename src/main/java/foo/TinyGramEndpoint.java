@@ -71,7 +71,7 @@ public class TinyGramEndpoint {
 			String[] parts = user.getEmail().split("@");
 			String part1 = parts[0];
 			e.setProperty("pseudo", "@" + part1);
-			e.setProperty("bio", "I'm a human, funny with cool attitude. Follow me");
+			e.setProperty("bio", "I'm a human, funny and cool. Follow me");
 			e.setProperty("profilUrl", up.getProfilUrl());
 
 			List<String> followings = new ArrayList<String>();
